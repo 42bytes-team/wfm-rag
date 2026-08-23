@@ -5,6 +5,8 @@
 - `agent_knowledge_search`
 - `agent_knowledge_get`
 
+It does not start an HTTP server, bind a port, expose a URL, or support HTTP, SSE, or Streamable HTTP transport. A compatible client must launch a local stdio process.
+
 The client starts the process. Do not start `wfm-rag mcp` separately when using one of the configurations below.
 
 ## Install And Index
@@ -144,7 +146,7 @@ Some clients call the map `servers`, require `type: "stdio"`, or place the execu
 
 If the process does not exit within a reasonable client timeout after stdin closes, send `SIGTERM`, wait again, and use `SIGKILL` only as the final fallback.
 
-The server supports the current `server/discover` handshake and the earlier `initialize` flow used by clients such as OMP. A conforming client should negotiate the protocol rather than sending tool requests before initialization completes.
+The repository subprocess suite directly covers the current `server/discover` handshake. The pinned SDK also accepts the earlier `initialize` flow used by clients such as OMP; OMP 17.1.5 was manually validated during client onboarding, but that older first-frame sequence is not yet a dedicated repository subprocess test. A conforming client should negotiate the protocol rather than sending tool requests before initialization completes.
 
 ## Multiple Repositories
 
@@ -172,9 +174,13 @@ Each repository must be indexed separately.
 Before debugging a client, verify the same index through the CLI:
 
 ```bash
-/home/alice/.local/bin/wfm-rag search --root /home/alice/projects/api "config parser comma separated"
-/home/alice/.local/bin/wfm-rag get --root /home/alice/projects/api ini-list-parsing
+index=/home/alice/.local/share/wfm-rag/api-index.json
+
+/home/alice/.local/bin/wfm-rag search --root /home/alice/projects/api --index "$index" "config parser comma separated"
+/home/alice/.local/bin/wfm-rag get --root /home/alice/projects/api --index "$index" ini-list-parsing
 ```
+
+If the client uses the default root-derived index, omit `--index` consistently from both commands.
 
 Expected client-visible behavior:
 
@@ -182,6 +188,26 @@ Expected client-visible behavior:
 - Search responses contain `root`, `indexed_at`, ranked results, score reasons, excerpts, source headings, and citations.
 - Get responses contain complete original Markdown, metadata, source, and citations.
 - Inputs have no `root`, `project`, write, index, or shell parameter.
+
+Search input shape:
+
+```json
+{
+  "query": "config parser comma separated",
+  "paths": ["src/pkgs/config/ini.go"],
+  "packages": ["gopkg.in/ini.v1"],
+  "types": ["dependency"],
+  "limit": 5
+}
+```
+
+Only `query` is required. Get input is:
+
+```json
+{
+  "id": "ini-list-parsing"
+}
+```
 
 ## Troubleshooting
 
@@ -191,7 +217,7 @@ Use an absolute executable path. GUI applications often have a smaller `PATH` th
 
 ### The index is missing
 
-Run `wfm-rag index --root <same-absolute-root>` as the same OS user that starts the client. If the MCP configuration includes `--index`, the indexing command must include the same path.
+Run `/absolute/path/to/wfm-rag index --root /absolute/path/to/repository` as the same OS user that starts the client. If the MCP configuration includes `--index`, the indexing command must include the same path.
 
 ### The index belongs to another root
 

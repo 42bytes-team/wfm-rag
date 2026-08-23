@@ -1,6 +1,6 @@
 # WFM RAG CLI And MCP Implementation Plan
 
-Status: Ready for implementation
+Status: Implemented
 Date: 2026-08-04
 
 ## Goal
@@ -80,7 +80,7 @@ After adding or editing Markdown knowledge:
 wfm-rag index --root /path/to/repository
 ```
 
-The running MCP server checks the index file modification time before each request and reloads it when the generated index changes.
+The running MCP server checks index size, modification time, and file identity before each valid search or get operation and reloads a stable validated replacement when it changes.
 
 ## Repository Layout
 
@@ -109,8 +109,12 @@ Rag/
   internal/testdata/
     corpus/
   docs/
+    architecture.md
+    cli.md
     index-format.md
-    mcp-tools.md
+    knowledge-authoring.md
+    mcp-clients.md
+    troubleshooting.md
 ```
 
 Responsibilities:
@@ -131,7 +135,7 @@ Use the standard library where practical and keep external dependencies limited 
 - `gopkg.in/yaml.v3` for frontmatter
 - `github.com/yuin/goldmark` for Markdown heading parsing
 
-Use Go 1.25 or newer because the selected MCP SDK requires it.
+Use the Go version declared by `go.mod`, currently Go 1.26.5. The selected MCP SDK requires at least Go 1.25.
 
 ## Corpus Contract
 
@@ -246,7 +250,7 @@ Normalize query and metadata terms by lowercasing, splitting punctuation, droppi
 
 Use a small deterministic score:
 
-- `+100`: exact card ID match
+- `+100`: exact normalized card ID match
 - `+40`: exact package match
 - `+30`: exact cited path or path-prefix hint match
 - `+20`: exact trigger or scope match
@@ -317,7 +321,7 @@ Input:
 ```json
 {
   "query": "config parser comma separated",
-  "paths": ["src/apps/percy-worker/config.go"],
+  "paths": ["src/pkgs/config/ini.go"],
   "packages": ["gopkg.in/ini.v1"],
   "types": ["pattern", "dependency"],
   "limit": 5
@@ -336,12 +340,12 @@ Output:
       "id": "ini-list-parsing",
       "type": "dependency",
       "title": "INI List Parsing",
-      "score": 64,
-      "reasons": ["package: gopkg.in/ini.v1", "trigger: config", "terms: config parser comma separated"],
-      "excerpt": "Read the exact section and key, then use Key.Strings...",
+      "score": 92,
+      "reasons": ["package: gopkg.in/ini.v1", "path: src/pkgs/config/ini.go", "trigger: comma-separated", "trigger: config", "scope: config", "text terms: config, parser"],
+      "excerpt": "## Examples\n\n`config.Rabbitmq.Topics` and Scanlan's role and channel lists use the dependency's list parser.",
       "source": ".agents/knowledge/dependencies/ini-list-parsing.md",
-      "heading": "Guidance",
-      "citations": ["src/pkgs/config/ini.go"]
+      "heading": "Examples",
+      "citations": ["src/pkgs/config/ini.go", "src/apps/scanlan-discord/configs.go"]
     }
   ]
 }
