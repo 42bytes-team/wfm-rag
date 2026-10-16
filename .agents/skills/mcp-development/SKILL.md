@@ -5,7 +5,7 @@ description: Use for MCP tools, typed schemas, stdio transport, protocol lifecyc
 
 # MCP Development
 
-Load `go-backend` and `go-test-writing`. Verify APIs against the exact official SDK version pinned in `go.mod`, not examples from SDK `main`.
+Load `go-implementation` and `go-test-writing`. Verify APIs against the exact official SDK version pinned in `go.mod`, not examples from SDK `main`.
 
 ## Concrete Surface
 

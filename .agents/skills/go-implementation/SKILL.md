@@ -1,9 +1,9 @@
 ---
-name: go-backend
+name: go-implementation
 description: Use first for any Go implementation in wfm-rag, including CLI commands, card parsing, JSON indexing, deterministic search, package ownership, and error contracts.
 ---
 
-# Go Backend
+# Go Implementation
 
 Load `go-test-writing` for behavior changes and `mcp-development` for MCP code. Use `agent-knowledge` when card schema/discovery/lifecycle changes.
 

@@ -16,7 +16,7 @@ The parent's API-specific instructions do **not** apply here: this repository ha
 
 | Task | Skill |
 | --- | --- |
-| Any Go implementation | `.agents/skills/go-backend/SKILL.md` |
+| Any Go implementation | `.agents/skills/go-implementation/SKILL.md` |
 | MCP tools, schemas, stdio, reload, protocol compatibility | `.agents/skills/mcp-development/SKILL.md` |
 | Adding, changing, repairing, or reviewing tests | `.agents/skills/go-test-writing/SKILL.md` |
 | Searching, retrieving, adding, updating, drafting, activating, retiring, deleting, validating, listing, or evaluating knowledge cards | `.agents/skills/agent-knowledge/SKILL.md` |
@@ -25,7 +25,7 @@ The parent's API-specific instructions do **not** apply here: this repository ha
 | Code, diff, PR, plan, or documentation review | `.agents/skills/code-review/SKILL.md` |
 | Git status, staging, commits, branches, or repository operations | `.agents/skills/git-workflow/SKILL.md` |
 
-Load all that apply. MCP behavior changes normally require `go-backend`, `mcp-development`, and `go-test-writing`. Knowledge-schema or lifecycle changes require `agent-knowledge` plus the owning Go/test skills.
+Load all that apply. MCP behavior changes normally require `go-implementation`, `mcp-development`, and `go-test-writing`. Knowledge-schema or lifecycle changes require `agent-knowledge` plus the owning Go/test skills.
 
 Agent clients commonly load instructions and skills only at startup. Restart the client after editing `AGENTS.md` or skill files before validating discovery behavior.
 
