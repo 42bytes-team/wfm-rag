@@ -4,12 +4,12 @@
 
 `wfm-rag` is one local Go executable with two access modes:
 
-- short-lived CLI commands for indexing, search, and exact retrieval;
+- short-lived CLI commands for indexing, search, exact retrieval, and project registry maintenance;
 - a long-lived read-only MCP process using newline-delimited JSON-RPC over stdin/stdout.
 
-Each invocation is bound to one target repository root. Markdown is authoritative. The generated JSON index is a complete disposable snapshot of active knowledge.
+Every retrieval is bound to exactly one named project. The registry maps project IDs to canonical repository roots; the index path is derived from the root. Markdown is authoritative. The generated JSON index is a complete disposable snapshot of active knowledge.
 
-There is no HTTP listener, database, background worker, watcher, embedding service, or multi-root process.
+There is no HTTP listener, database, background worker, watcher, or embedding service. One MCP process may serve several launched projects, but each call reads exactly one of them.
 
 ## Data Flow
 
@@ -32,7 +32,8 @@ There is no HTTP listener, database, background worker, watcher, embedding servi
           |                   |
           v                   v
       CLI invocation      MCP process
-       index.Load       stable fingerprint reload
+ registry lookup       project enum + select project
+       index.Load      stable per-project fingerprint reload
           |                   |
           +---------+---------+
                     v
@@ -48,7 +49,7 @@ CLI and MCP are adapters. They must not implement independent filtering, ranking
 Owns:
 
 - command dispatch and flag parsing;
-- default/custom index path resolution;
+- project resolution through `internal/project` and derived/custom index path selection;
 - text and JSON formatting;
 - stable CLI error classification and exit codes;
 - process startup and stdio transport selection.
@@ -82,6 +83,9 @@ Owns:
 - bounded file reads;
 - secure atomic replacement.
 
+- state-directory resolution (`$XDG_DATA_HOME/wfm-rag` with `~/.local/share/wfm-rag` fallback).
+
+
 Any incompatible serialized shape change requires an explicit version decision and an update to `docs/index-format.md`.
 
 ### `internal/search`
@@ -97,20 +101,41 @@ Owns:
 - bounded excerpts;
 - exact case-sensitive card retrieval.
 
-This package is transport-neutral and performs no I/O.
+This package is transport-neutral and performs no I/O. Retrieval always operates on exactly one index and echoes the selected project into the response envelope.
+
+### `internal/project`
+
+Owns:
+
+- the registry file: strict parsing, stored-root validation, ID syntax, sorted rendering, `0600`/`0700` modes;
+- the `flock(LOCK_EX|LOCK_NB)` writer lock and atomic replacement;
+- `init`/`remove` semantics including explicit rebinding;
+- statuses, the healthcheck sweep, and dangling-index purge safety.
+
+It never opens index file contents for `list`. Registry persistence touches only the state directory; the KB skeleton it triggers on `init` is owned by `internal/scaffold`.
+
+### `internal/scaffold`
+
+Owns:
+
+- the embedded KB skeleton assets: `schema.md`, eight card templates, and the starter agent-knowledge skill with a `{{PROJECT}}` placeholder;
+- create-only application of that skeleton into a target repository: missing files are written, existing files, directories, and symlinks are never modified, and a wrong-kind skeleton path is a refusal.
+
+It is invoked only by `project init`. No retrieval, registry, or index state ever lands in a target repository.
 
 ### `internal/mcpserver`
 
 Owns:
 
-- MCP server identity and the two typed tools;
+- MCP server identity and the two typed tools with a launch-scoped sorted `project` enum;
 - read-only/closed-world annotations;
 - semantic validation before index access;
-- index fingerprinting and stable reload;
+- project-keyed state with select-then-reload and stable fingerprints;
+- degraded startup warnings and model-actionable per-project error text;
 - request cancellation boundaries;
 - typed structured output plus SDK text fallback.
 
-Default index-path selection remains in the command package. MCP handlers use shared `search` request/response types.
+Default index-path selection remains in the command package and `internal/project`. MCP handlers use shared `search` response types.
 
 ## Corpus Trust Boundary
 
@@ -120,7 +145,9 @@ Only regular lowercase `.md` cards under these exact directories are candidates:
 - `anti-patterns`
 - `dependencies`
 - `incidents`
+- `research`
 - `sources`
+- `state`
 
 The supplied repository root may be a symlink and is canonicalized. The internal `.agents` and `.agents/knowledge` directories must be real directories. Inner symlinks and non-regular files are ignored rather than followed.
 
@@ -203,17 +230,17 @@ The loader rejects missing, symlinked, non-regular, oversized, malformed, traili
 
 ## Freshness
 
-CLI search/get load and validate the configured index for every process invocation.
+CLI search/get resolve the project through the registry and load and validate that project's index for every process invocation.
 
-The MCP process keeps one in-memory snapshot. Before each valid search or get operation it compares:
+The MCP process keeps one validated entry per launched project. Before each valid search or get for the selected project it compares:
 
 - file size;
 - modification time;
 - file identity (`os.SameFile`).
 
-When changed, it checks the fingerprint before and after `index.Load`. It publishes the replacement only when the same file was loaded stably and validated for the fixed root.
+When changed or degraded, it checks the fingerprint before and after `index.Load`. It publishes the replacement only when the same file was loaded stably and validated for that project's root.
 
-A failed reload returns `index reload failure`. The server does not silently serve its stale in-memory snapshot. A later valid atomic replacement recovers without restarting.
+A failed reload fails only calls that select that project and never serves that project's stale snapshot; other projects keep working. A degraded project recovers on a later call once a valid index exists, without restarting the process.
 
 ## MCP Transport
 
@@ -222,7 +249,7 @@ The server uses the official Go SDK pinned in `go.mod` and exposes exactly:
 - `agent_knowledge_search`
 - `agent_knowledge_get`
 
-Success includes structured content and a JSON text fallback. Tool errors are MCP tool errors, not CLI error envelopes.
+Both inputs require `project`, constrained to a sorted enum of the IDs configured at launch. Success includes structured content and a JSON text fallback. Tool errors are MCP tool errors, not CLI error envelopes.
 
 Transport invariants:
 
@@ -247,6 +274,7 @@ Do not add these without a measured requirement and explicit design change:
 - embeddings or vector search;
 - automatic watching/indexing;
 - write-capable MCP tools;
-- one process serving multiple roots;
+- cross-corpus search, merged result lists, or corpus inference from working directories;
+- repository marker files or any identity, registry, or retrieval state written into target repositories (the create-only KB skeleton from `project init` is authoring content, not state);
 - source-file indexing through citations;
 - dependency injection or interfaces without multiple real implementations.

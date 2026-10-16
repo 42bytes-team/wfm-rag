@@ -10,6 +10,8 @@ Knowledge lives as version-controlled Markdown in the target repository. Never e
 
 After every source change, run a complete `wfm-rag index` build.
 
+A new KB bootstraps itself: `wfm-rag project init <id>` registers the project and creates the missing skeleton — the category directories, `.agents/knowledge/schema.md`, the eight card templates under `.agents/knowledge/templates/`, and a starter `.agents/skills/agent-knowledge/SKILL.md` with the project ID rendered in. Scaffolding is create-only: existing files are never overwritten, so a repository may keep its customized copies. Route matching tasks to the skill from `AGENTS.md`; keep repository-specific changes in the skill's final profile section so future synchronization stays easy.
+
 ## Discoverable Categories
 
 Only these exact first-level directories are scanned:
@@ -19,7 +21,9 @@ patterns/
 anti-patterns/
 dependencies/
 incidents/
+research/
 sources/
+state/
 ```
 
 Nested directories are allowed. Discovery ignores:
@@ -40,10 +44,20 @@ The `.agents` and `.agents/knowledge` directories themselves must not be symlink
 | `anti-pattern` | `anti-patterns/` | Known harmful approach and safer alternative |
 | `dependency` | `dependencies/` | Package-specific API or behavior |
 | `incident` | `incidents/` | Failure, cause, remediation, and prevention |
+| `research` | `research/` | Open research target: current state, findings, data location |
 | `reference` | `sources/` | Durable repository or external reference |
 | `decision` | `sources/` | Architectural decision and rationale |
+| `state` | `state/` | Current project state: what works, what is pending, live inventories |
 
 The implementation validates directory category and card type separately; this mapping is an authoring convention.
+
+## Placement And Time Independence
+
+Time-independent types stay time-independent. `patterns/`, `anti-patterns/`, `sources/`, and `dependencies/` hold facts that remain true whenever they are read: no dated measurements, no current project state, no work-state narratives, no incident retelling, and no correction banner over superseded text — rewrite the body instead.
+
+`state/`, `incidents/`, and `research/` hold dated snapshots: current state plus concise history, each card dated, and each incident or research card linked to its own working directory. Scripts and large artifacts belong in that working directory, never inside a card. Data that a database or service already owns is not a card; the card stores the query path.
+
+The target repository's `agent-knowledge` skill owns the detailed placement rules and the hygiene sweep.
 
 ## Complete Schema
 
@@ -152,10 +166,11 @@ All statuses reserve their ID. A new card cannot reuse the ID of a draft or reti
 
 ```bash
 repo=/absolute/repository
+project=api   # the registered project ID; `wfm-rag project list` shows registrations
 
-wfm-rag index --root "$repo"
-wfm-rag search --root "$repo" "likely wording package behavior"
-wfm-rag get --root "$repo" stable-card-id
+wfm-rag index --project "$project"
+wfm-rag search --project "$project" "likely wording package behavior"
+wfm-rag get --project "$project" stable-card-id
 ```
 
 ## Update A Card
@@ -190,7 +205,7 @@ Delete the canonical file through the target repository's VCS workflow and reind
 
 ```bash
 git -C "$repo" rm .agents/knowledge/patterns/obsolete-card.md
-wfm-rag index --root "$repo"
+wfm-rag index --project api
 ```
 
 Deletion is not reflected until a successful rebuild replaces the old index.
@@ -205,7 +220,7 @@ There is no validate-only command. Build an isolated index:
 check_dir="$(mktemp -d)"
 
 wfm-rag index \
-  --root "$repo" \
+  --project api \
   --index "$check_dir/index.json" \
   --format json
 ```
@@ -220,7 +235,7 @@ List active indexed cards:
 
 ```bash
 index_path="$(
-  wfm-rag index --root "$repo" --format json |
+  wfm-rag index --project api --format json |
     jq -r '.index'
 )"
 
@@ -242,7 +257,7 @@ Every index command is a complete build. There is no incremental mode.
 Default path:
 
 ```bash
-wfm-rag index --root "$repo"
+wfm-rag index --project api
 ```
 
 Explicit path:
@@ -250,12 +265,17 @@ Explicit path:
 ```bash
 index=/absolute/index.json
 
-wfm-rag index --root "$repo" --index "$index"
-wfm-rag search --root "$repo" --index "$index" "query"
-wfm-rag mcp --root "$repo" --index "$index"
+wfm-rag index --project api --index "$index"
+wfm-rag search --project api --index "$index" "query"
 ```
 
-All processes must use the same canonical root and explicit index path.
+`mcp` accepts no `--index`: it always uses the derived path of each selected project.
+
+```bash
+wfm-rag mcp --project api
+```
+
+Every process must select the same project. `--index` relocates the index file only; the expected root stays the project's registered canonical root.
 
 ## Limits
 
