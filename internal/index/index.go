@@ -109,18 +109,40 @@ func Rebuild(root, path string) (*BuildResult, error) {
 	return result, nil
 }
 
+// StateDir returns the shared state directory for indexes and the project
+// registry: $XDG_DATA_HOME/wfm-rag when XDG_DATA_HOME is set and absolute,
+// otherwise $HOME/.local/share/wfm-rag. A relative or empty XDG_DATA_HOME is
+// invalid per the XDG Base Directory spec and falls back. An empty HOME is an error.
+func StateDir() (string, error) {
+	if xdg := os.Getenv("XDG_DATA_HOME"); xdg != "" && filepath.IsAbs(xdg) {
+		return filepath.Join(xdg, "wfm-rag"), nil
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("resolve state directory: %w", err)
+	}
+	return filepath.Join(home, ".local", "share", "wfm-rag"), nil
+}
+
 // DefaultPath returns the stable per-root index location.
 func DefaultPath(root string) (string, error) {
 	canonical, err := cards.CanonicalRoot(root)
 	if err != nil {
 		return "", fmt.Errorf("resolve default index path: %w", err)
 	}
-	home, err := os.UserHomeDir()
+	return DefaultPathFromCanonical(canonical)
+}
+
+// DefaultPathFromCanonical returns the stable index location for an already
+// canonical root, without requiring the directory to still exist. Adapters use
+// it to report derived paths for registered roots that have vanished.
+func DefaultPathFromCanonical(canonical string) (string, error) {
+	state, err := StateDir()
 	if err != nil {
 		return "", fmt.Errorf("resolve default index path: %w", err)
 	}
 	digest := sha256.Sum256([]byte(canonical))
-	return filepath.Join(home, ".local", "share", "wfm-rag", hex.EncodeToString(digest[:]), "index.json"), nil
+	return filepath.Join(state, hex.EncodeToString(digest[:]), "index.json"), nil
 }
 
 // Write atomically replaces path with index after syncing a temporary sibling.

@@ -31,14 +31,16 @@ var (
 	ErrMalformedCard = errors.New("malformed card corpus")
 	ErrDuplicateID   = errors.New("duplicate card id")
 
-	validTypes  = []string{"anti-pattern", "decision", "dependency", "incident", "pattern", "reference"}
+	validTypes  = []string{"anti-pattern", "decision", "dependency", "incident", "pattern", "reference", "research", "state"}
 	validStatus = []string{"active", "draft", "retired"}
 	categories  = map[string]struct{}{
 		"anti-patterns": {},
 		"dependencies":  {},
 		"incidents":     {},
 		"patterns":      {},
+		"research":      {},
 		"sources":       {},
+		"state":         {},
 	}
 )
 

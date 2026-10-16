@@ -13,6 +13,8 @@ import (
 	indexpkg "wfm-rag/internal/index"
 )
 
+const testProject = "api"
+
 func TestSearchScoreBoosts(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -81,7 +83,7 @@ func TestSearchScoreBoosts(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			value := testIndex(test.chunk)
-			response, err := Search(value, test.query)
+			response, err := Search(value, testProject, test.query)
 			if err != nil {
 				t.Fatalf("Search() error = %v", err)
 			}
@@ -105,7 +107,7 @@ func TestSearchAccumulatesFormulaInReasonOrder(t *testing.T) {
 	chunk.Paths = []string{"alpha beta"}
 	chunk.Triggers = []string{"alpha"}
 	chunk.Scopes = []string{"beta"}
-	response, err := Search(testIndex(chunk), Query{Text: "alpha beta"})
+	response, err := Search(testIndex(chunk), testProject, Query{Text: "alpha beta"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,7 +133,7 @@ func TestSearchAccumulatesFormulaInReasonOrder(t *testing.T) {
 func TestSearchDeduplicatesMetadataTerms(t *testing.T) {
 	chunk := testChunk("card", "Title", "Heading", "body")
 	chunk.Triggers = []string{"go-go"}
-	response, err := Search(testIndex(chunk), Query{Text: "go"})
+	response, err := Search(testIndex(chunk), testProject, Query{Text: "go"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +145,7 @@ func TestSearchDeduplicatesMetadataTerms(t *testing.T) {
 func TestSearchPhrasePreservesDocumentTokenSequence(t *testing.T) {
 	falsePositive := testChunk("false-positive", "Title", "Heading", "x alpha x beta")
 	realPhrase := testChunk("real-phrase", "Title", "Heading", "alpha x beta alpha beta")
-	response, err := Search(testIndex(falsePositive, realPhrase), Query{Text: "alpha beta"})
+	response, err := Search(testIndex(falsePositive, realPhrase), testProject, Query{Text: "alpha beta"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -163,7 +165,7 @@ func TestSearchMetadataReasonsAreSortedAndCategoryBoostsAreSingle(t *testing.T) 
 	chunk := testChunk("card", "Title", "Heading", "body")
 	chunk.Packages = []string{"z/pkg", "a/pkg"}
 	chunk.Paths = []string{"z/path", "a/path"}
-	response, err := Search(testIndex(chunk), Query{
+	response, err := Search(testIndex(chunk), testProject, Query{
 		Text:     "unrelated",
 		Packages: []string{"z/pkg", "a/pkg"},
 		Paths:    []string{"z/path", "a/path"},
@@ -195,7 +197,7 @@ func TestSearchFiltersUseORWithinKindAndANDAcrossKinds(t *testing.T) {
 	third.Packages = []string{"pkg/third"}
 	third.Paths = []string{"src/third.go"}
 
-	response, err := Search(testIndex(first, second, third), Query{
+	response, err := Search(testIndex(first, second, third), testProject, Query{
 		Text:     "needle",
 		Packages: []string{"pkg/missing", "pkg/first"},
 		Paths:    []string{"src/first/file.go", "src/third.go"},
@@ -213,7 +215,7 @@ func TestSearchPathPrefixRequiresCitationSegmentBoundary(t *testing.T) {
 	chunk := testChunk("card", "Card", "Heading", "needle")
 	chunk.Paths = []string{"src/foo"}
 	for _, filter := range []string{"src/foobar/file.go", "src"} {
-		response, err := Search(testIndex(chunk), Query{Text: "needle", Paths: []string{filter}})
+		response, err := Search(testIndex(chunk), testProject, Query{Text: "needle", Paths: []string{filter}})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -240,7 +242,7 @@ func TestSearchDeduplicatesCardsAndOrdersDeterministically(t *testing.T) {
 	c.Source = ".agents/knowledge/patterns/c.md"
 	zero := testChunk("zero", "Zero", "Heading", "body")
 
-	response, err := Search(testIndex(a1, zero, c, a0, b, a2), Query{Text: "needle"})
+	response, err := Search(testIndex(a1, zero, c, a0, b, a2), testProject, Query{Text: "needle"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -261,14 +263,14 @@ func TestSearchLimitDefaultsAndApplies(t *testing.T) {
 		chunks = append(chunks, chunk)
 	}
 	value := testIndex(chunks...)
-	response, err := Search(value, Query{Text: "needle"})
+	response, err := Search(value, testProject, Query{Text: "needle"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(response.Results) != DefaultLimit {
 		t.Errorf("default results = %d, want %d", len(response.Results), DefaultLimit)
 	}
-	response, err = Search(value, Query{Text: "needle", Limit: intPointer(2)})
+	response, err = Search(value, testProject, Query{Text: "needle", Limit: intPointer(2)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -279,7 +281,7 @@ func TestSearchLimitDefaultsAndApplies(t *testing.T) {
 
 func TestSearchExcerptHandlesCaseFoldByteLengthChanges(t *testing.T) {
 	text := strings.Repeat("K", 900) + " needle " + strings.Repeat("x", 900)
-	response, err := Search(testIndex(testChunk("card", "Title", "Heading", text)), Query{Text: "needle"})
+	response, err := Search(testIndex(testChunk("card", "Title", "Heading", text)), testProject, Query{Text: "needle"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -290,7 +292,7 @@ func TestSearchExcerptHandlesCaseFoldByteLengthChanges(t *testing.T) {
 
 func TestSearchExcerptAnchorsOnTokenBoundary(t *testing.T) {
 	text := strings.Repeat("algorithm ", 100) + strings.Repeat("x ", 500) + "go " + strings.Repeat("after ", 500)
-	response, err := Search(testIndex(testChunk("card", "Title", "Heading", text)), Query{Text: "go"})
+	response, err := Search(testIndex(testChunk("card", "Title", "Heading", text)), testProject, Query{Text: "go"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -301,7 +303,7 @@ func TestSearchExcerptAnchorsOnTokenBoundary(t *testing.T) {
 }
 
 func TestSearchPunctuationOnlyQueryReturnsNoResults(t *testing.T) {
-	response, err := Search(testIndex(testChunk("card", "Title", "Heading", "---")), Query{Text: "---"})
+	response, err := Search(testIndex(testChunk("card", "Title", "Heading", "---")), testProject, Query{Text: "---"})
 	if err != nil {
 		t.Fatalf("Search() error = %v", err)
 	}
@@ -313,7 +315,7 @@ func TestSearchPunctuationOnlyQueryReturnsNoResults(t *testing.T) {
 func TestSearchExcerptIsBoundedAroundUsefulMatch(t *testing.T) {
 	text := strings.Repeat("界", 900) + " needle " + strings.Repeat("後", 900)
 	chunk := testChunk("card", "Title", "Heading", text)
-	response, err := Search(testIndex(chunk), Query{Text: "needle"})
+	response, err := Search(testIndex(chunk), testProject, Query{Text: "needle"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -327,7 +329,7 @@ func TestSearchExcerptIsBoundedAroundUsefulMatch(t *testing.T) {
 
 	short := "short needle"
 	chunk.Text = short
-	response, err = Search(testIndex(chunk), Query{Text: "needle"})
+	response, err = Search(testIndex(chunk), testProject, Query{Text: "needle"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -358,11 +360,57 @@ func TestSearchValidatesInputs(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := Search(test.value, test.query)
+			_, err := Search(test.value, testProject, test.query)
 			if !errors.Is(err, ErrInvalidArguments) {
 				t.Fatalf("Search() error = %v, want ErrInvalidArguments", err)
 			}
 		})
+	}
+}
+
+func TestSearchAndGetValidateProject(t *testing.T) {
+	value := testIndex(testChunk("card", "Card", "Card", "body"))
+	tests := []struct {
+		name    string
+		project string
+	}{
+		{name: "empty project", project: ""},
+		{name: "whitespace project", project: " \t\n"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if _, err := Search(value, test.project, Query{Text: "card"}); !errors.Is(err, ErrInvalidArguments) {
+				t.Errorf("Search() error = %v, want ErrInvalidArguments", err)
+			}
+			if _, err := Get(value, test.project, "card"); !errors.Is(err, ErrInvalidArguments) {
+				t.Errorf("Get() error = %v, want ErrInvalidArguments", err)
+			}
+		})
+	}
+}
+
+func TestSearchResponseCarriesProjectEnvelope(t *testing.T) {
+	value := testIndex(testChunk("card", "Title", "Heading", "needle body"))
+	response, err := Search(value, "api", Query{Text: "needle"})
+	if err != nil {
+		t.Fatalf("Search() error = %v", err)
+	}
+	if response.Project != "api" || response.Root != value.Root || response.IndexedAt != "2026-08-12T12:00:00Z" {
+		t.Errorf("envelope = project %q, root %q, indexed %q", response.Project, response.Root, response.IndexedAt)
+	}
+	encoded, err := json.Marshal(response)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(string(encoded), `{"project":"api","root":"/repository","indexed_at":"2026-08-12T12:00:00Z","query":"needle","results":`) {
+		t.Errorf("JSON = %s, want the envelope to start with project, root, indexed_at, query, results", encoded)
+	}
+	results, err := json.Marshal(response.Results)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(results), `"root"`) {
+		t.Errorf("results JSON = %s, results must not carry per-result roots", results)
 	}
 }
 
@@ -377,20 +425,20 @@ func TestGetReturnsCompleteExactCard(t *testing.T) {
 		Content:  "---\nid: card-id\n---\n# Card\n\nBody\n",
 	}}
 
-	response, err := Get(value, "card-id")
+	response, err := Get(value, testProject, "card-id")
 	if err != nil {
 		t.Fatalf("Get() error = %v", err)
 	}
-	if response.Root != value.Root || response.IndexedAt != "2026-08-12T12:00:00.000000123Z" {
-		t.Errorf("response identity = root %q, indexed %q", response.Root, response.IndexedAt)
+	if response.Project != testProject || response.Root != value.Root || response.IndexedAt != "2026-08-12T12:00:00.000000123Z" {
+		t.Errorf("response identity = project %q, root %q, indexed %q", response.Project, response.Root, response.IndexedAt)
 	}
 	if !reflect.DeepEqual(response.Card, value.Documents[0]) {
 		t.Errorf("Card = %#v, want %#v", response.Card, value.Documents[0])
 	}
-	if _, err := Get(value, "CARD-ID"); !errors.Is(err, ErrCardNotFound) {
+	if _, err := Get(value, testProject, "CARD-ID"); !errors.Is(err, ErrCardNotFound) {
 		t.Errorf("case-changing Get() error = %v, want ErrCardNotFound", err)
 	}
-	if _, err := Get(value, "missing"); !errors.Is(err, ErrCardNotFound) {
+	if _, err := Get(value, testProject, "missing"); !errors.Is(err, ErrCardNotFound) {
 		t.Errorf("missing Get() error = %v, want ErrCardNotFound", err)
 	}
 }
@@ -409,11 +457,35 @@ func TestGetValidatesInputs(t *testing.T) {
 		{name: "long", value: value, id: strings.Repeat("a", MaxCardIDBytes+1)},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := Get(test.value, test.id)
+			_, err := Get(test.value, testProject, test.id)
 			if !errors.Is(err, ErrInvalidArguments) {
 				t.Fatalf("Get() error = %v, want ErrInvalidArguments", err)
 			}
 		})
+	}
+}
+
+func TestGetResponseCarriesProjectEnvelope(t *testing.T) {
+	value := testIndex(testChunk("card-id", "Card", "Card", "body"))
+	value.Documents = []indexpkg.Document{{
+		Metadata: cards.Metadata{ID: "card-id", Type: "pattern", Status: "active"},
+		Title:    "Card",
+		Source:   "card.md",
+		Content:  "# Card\n\nBody\n",
+	}}
+	response, err := Get(value, "api", "card-id")
+	if err != nil {
+		t.Fatalf("Get() error = %v", err)
+	}
+	if response.Project != "api" {
+		t.Errorf("Project = %q, want the requested project echoed", response.Project)
+	}
+	encoded, err := json.Marshal(response)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(string(encoded), `{"project":"api","root":"/repository","indexed_at":"2026-08-12T12:00:00Z","card":`) {
+		t.Errorf("JSON = %s, want the envelope to start with project, root, indexed_at, card", encoded)
 	}
 }
 

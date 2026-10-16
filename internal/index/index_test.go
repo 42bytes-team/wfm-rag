@@ -55,6 +55,7 @@ func TestDefaultPathUsesCanonicalRootHash(t *testing.T) {
 	root := t.TempDir()
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("XDG_DATA_HOME", "")
 	linkParent := t.TempDir()
 	link := filepath.Join(linkParent, "repo")
 	if err := os.Symlink(root, link); err != nil {
@@ -69,6 +70,79 @@ func TestDefaultPathUsesCanonicalRootHash(t *testing.T) {
 	want := filepath.Join(home, ".local", "share", "wfm-rag", hex.EncodeToString(digest[:]), "index.json")
 	if got != want {
 		t.Errorf("DefaultPath() = %q, want %q", got, want)
+	}
+}
+
+func TestStateDirPrefersAbsoluteXDGDataHome(t *testing.T) {
+	xdg := t.TempDir()
+	t.Setenv("XDG_DATA_HOME", xdg)
+
+	got, err := StateDir()
+	if err != nil {
+		t.Fatalf("StateDir() error = %v", err)
+	}
+	if want := filepath.Join(xdg, "wfm-rag"); got != want {
+		t.Errorf("StateDir() = %q, want %q", got, want)
+	}
+}
+
+func TestDefaultPathResolvesThroughAbsoluteXDGDataHome(t *testing.T) {
+	root := t.TempDir()
+	xdg := t.TempDir()
+	t.Setenv("XDG_DATA_HOME", xdg)
+
+	got, err := DefaultPath(root)
+	if err != nil {
+		t.Fatalf("DefaultPath() error = %v", err)
+	}
+	digest := sha256.Sum256([]byte(root))
+	want := filepath.Join(xdg, "wfm-rag", hex.EncodeToString(digest[:]), "index.json")
+	if got != want {
+		t.Errorf("DefaultPath() = %q, want %q", got, want)
+	}
+}
+
+func TestStateDirFallsBackWhenXDGDataHomeInvalid(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	want := filepath.Join(home, ".local", "share", "wfm-rag")
+
+	cases := []struct {
+		name  string
+		value string
+		unset bool
+	}{
+		{name: "unset", unset: true},
+		{name: "empty", value: ""},
+		{name: "relative", value: ".cache/wfm-rag"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("XDG_DATA_HOME", "placeholder")
+			if tc.unset {
+				os.Unsetenv("XDG_DATA_HOME")
+			} else {
+				t.Setenv("XDG_DATA_HOME", tc.value)
+			}
+			got, err := StateDir()
+			if err != nil {
+				t.Fatalf("StateDir() error = %v", err)
+			}
+			if got != want {
+				t.Errorf("StateDir() = %q, want %q", got, want)
+			}
+		})
+	}
+}
+
+func TestStateDirAndDefaultPathRejectEmptyHome(t *testing.T) {
+	t.Setenv("HOME", "")
+	t.Setenv("XDG_DATA_HOME", "")
+	if _, err := StateDir(); err == nil {
+		t.Fatal("StateDir() error = nil, want empty HOME error")
+	}
+	if _, err := DefaultPath(t.TempDir()); err == nil {
+		t.Fatal("DefaultPath() error = nil, want empty HOME error")
 	}
 }
 

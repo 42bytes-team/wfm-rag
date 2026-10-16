@@ -40,8 +40,9 @@ type Query struct {
 	Limit    *int     `json:"limit,omitempty"`
 }
 
-// Response is the shared CLI and MCP search result.
+// Response is the shared CLI and MCP search result for one project.
 type Response struct {
+	Project   string   `json:"project"`
 	Root      string   `json:"root"`
 	IndexedAt string   `json:"indexed_at"`
 	Query     string   `json:"query"`
@@ -62,17 +63,22 @@ type Result struct {
 	Ordinal   int      `json:"-"`
 }
 
-// GetResponse returns one complete indexed card.
+// GetResponse returns one complete indexed card from one project.
 type GetResponse struct {
+	Project   string            `json:"project"`
 	Root      string            `json:"root"`
 	IndexedAt string            `json:"indexed_at"`
 	Card      indexpkg.Document `json:"card"`
 }
 
-// Search scores, filters, and deduplicates chunks from one validated index.
-func Search(value *indexpkg.Index, query Query) (Response, error) {
+// Search scores, filters, and deduplicates chunks from one validated index and
+// labels the envelope with the project the caller selected.
+func Search(value *indexpkg.Index, project string, query Query) (Response, error) {
 	if value == nil {
 		return Response{}, fmt.Errorf("%w: index is required", ErrInvalidArguments)
+	}
+	if err := validateProject(project); err != nil {
+		return Response{}, err
 	}
 	normalizedQuery, terms, err := validateQuery(query)
 	if err != nil {
@@ -83,6 +89,7 @@ func Search(value *indexpkg.Index, query Query) (Response, error) {
 		limit = *query.Limit
 	}
 	response := Response{
+		Project:   project,
 		Root:      value.Root,
 		IndexedAt: value.GeneratedAt.UTC().Format(time.RFC3339Nano),
 		Query:     query.Text,
@@ -128,10 +135,14 @@ func ValidateQuery(query Query) error {
 	return err
 }
 
-// Get returns one complete card by exact, case-sensitive stable ID.
-func Get(value *indexpkg.Index, id string) (GetResponse, error) {
+// Get returns one complete card by exact, case-sensitive stable ID and labels
+// the envelope with the project the caller selected.
+func Get(value *indexpkg.Index, project string, id string) (GetResponse, error) {
 	if value == nil {
 		return GetResponse{}, fmt.Errorf("%w: index is required", ErrInvalidArguments)
+	}
+	if err := validateProject(project); err != nil {
+		return GetResponse{}, err
 	}
 	if err := ValidateID(id); err != nil {
 		return GetResponse{}, err
@@ -139,6 +150,7 @@ func Get(value *indexpkg.Index, id string) (GetResponse, error) {
 	for _, document := range value.Documents {
 		if document.ID == id {
 			return GetResponse{
+				Project:   project,
 				Root:      value.Root,
 				IndexedAt: value.GeneratedAt.UTC().Format(time.RFC3339Nano),
 				Card:      document,
@@ -152,6 +164,13 @@ func Get(value *indexpkg.Index, id string) (GetResponse, error) {
 func ValidateID(id string) error {
 	if !utf8.ValidString(id) || len(id) > MaxCardIDBytes || strings.TrimSpace(id) == "" || id != strings.TrimSpace(id) {
 		return fmt.Errorf("%w: card id must be 1-%d UTF-8 bytes without surrounding whitespace", ErrInvalidArguments, MaxCardIDBytes)
+	}
+	return nil
+}
+
+func validateProject(project string) error {
+	if strings.TrimSpace(project) == "" {
+		return fmt.Errorf("%w: project must contain non-whitespace text", ErrInvalidArguments)
 	}
 	return nil
 }
