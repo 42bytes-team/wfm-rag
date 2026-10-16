@@ -5,22 +5,22 @@ description: Use first for any Go implementation in wfm-rag, including CLI comma
 
 # Go Backend
 
-Load `go-test-writing` for behavior changes and `mcp-development` for MCP code. Use `knowledge-authoring` when card schema/discovery/lifecycle changes.
+Load `go-test-writing` for behavior changes and `mcp-development` for MCP code. Use `agent-knowledge` when card schema/discovery/lifecycle changes.
 
 ## Module And Dependencies
 
 - Module root is the repository root; module path is `wfm-rag`.
 - Use the Go version in `go.mod`.
-- Approved direct dependencies are the official MCP Go SDK, `gopkg.in/yaml.v3`, and `github.com/yuin/goldmark`.
+- Approved direct dependencies are the official MCP Go SDK, `github.com/google/jsonschema-go`, `gopkg.in/yaml.v3`, and `github.com/yuin/goldmark`.
 - No external runtime/test services exist.
 
 ## Ownership Map
 
 ### `cmd/wfm-rag`
 
-Entry points: `run`, `runIndex`, `runSearch`, `runGet`, `runMCP`, `resolveIndexPath`, `classifyError`.
+Entry points: `run` dispatching `runIndex`, `runSearch`, `runGet`, `runMCP`, and `runProject`; registry-backed project resolution; `classifyError`.
 
-Own flags, positional validation, default/custom path selection, text/JSON output, stable CLI error codes, exit status, and process transport. Keep reusable logic out of this package.
+Own flags, positional validation, project resolution through `internal/project`, `--index` location overrides, text/JSON output, stable CLI error codes, exit status, and process transport. Keep reusable logic out of this package.
 
 ### `internal/cards`
 
@@ -30,7 +30,7 @@ Own filesystem containment, discovery, YAML, statuses, duplicate IDs, title extr
 
 ### `internal/index`
 
-Public surface: `Version`, `MaxIndexBytes`; `Index`, `Document`, `BuildResult`; `Build`, `Rebuild`, `DefaultPath`, `Write`, `Load`; `ErrMissing`, `ErrInvalid`, `ErrUnsupportedVersion`, `ErrRootMismatch`.
+Public surface: `Version`, `MaxIndexBytes`; `Index`, `Document`, `BuildResult`; `Build`, `Rebuild`, `StateDir`, `DefaultPath`, `DefaultPathFromCanonical`, `Write`, `Load`; `ErrMissing`, `ErrInvalid`, `ErrUnsupportedVersion`, `ErrRootMismatch`.
 
 Own serialized shape, document/chunk flattening, structural consistency, canonical-root binding, bounded reads, and secure atomic replacement. For any serialized field or validation change, decide explicitly whether old JSON remains compatible. Increment `Version` when it does not and update `docs/index-format.md`.
 
@@ -38,20 +38,35 @@ Own serialized shape, document/chunk flattening, structural consistency, canonic
 
 Public surface: `DefaultLimit`, `MaxLimit`, `MaxQueryBytes`, `MaxCardIDBytes`, `MaxFilterValues`, `MaxFilterBytes`, `MaxExcerptChars`; `Query`, `Response`, `Result`, `GetResponse`; `ValidateQuery`, `Search`, `ValidateID`, `Get`; `ErrInvalidArguments`, `ErrCardNotFound`.
 
-Own all retrieval semantics. It is pure and transport-neutral. Preserve one-best-chunk-per-card dedup, reason order, score/source/ordinal ordering, and exact case-sensitive get.
+Own all retrieval semantics for exactly one index and one named project. It is pure and transport-neutral. Preserve one-best-chunk-per-card dedup, reason order, score/source/ordinal ordering, and exact case-sensitive get.
+
+
+### `internal/project`
+
+Public surface: `Load`, `Init`, `Remove`, `Statuses`, `Healthcheck`, `PurgeDangling`, `ProjectPaths`, `RegistryPath`; `Registry`, `Entry`, `InitResult`, `Status`, `Finding`; `MaxRegistryBytes`, `MaxProjects`; `ErrRegistryMissing`, `ErrRegistryInvalid`, `ErrIDInvalid`, `ErrUnknownID`, `ErrLimitExceeded`, `ErrLocked`.
+
+Own the registry file, the `flock(LOCK_EX|LOCK_NB)` writer lock, ID syntax, stored-root validation, strict parsing with duplicate-key detection, sorted rendering, statuses without opening indexes, the healthcheck sweep, and dangling-index purge safety. Never write into target repositories.
+
+### `internal/scaffold`
+
+Public surface: `Ensure`.
+
+Own the embedded KB skeleton that `project init` creates — the seven category directories, `.agents/knowledge/schema.md`, the eight card templates under `.agents/knowledge/templates/`, and the starter `agent-knowledge` skill with the project ID rendered in — and its create-only filesystem behavior: existing files, directories, and symlinks are never overwritten, displaced, or written through, and a wrong-kind skeleton path is an error rather than a replacement. No other package writes into a target repository.
 
 ### `internal/mcpserver`
 
-Public surface: `GetInput`, `ErrReload`, `New`, `Run`.
+Public surface: `Source`, `LoadWarning`, `New`, `ErrReload`, `SearchInput`, `GetInput`, the `agent_knowledge_search` and `agent_knowledge_get` tools.
 
-Own typed tool adaptation, fixed-root in-memory state, stable reload, and cancellation boundaries. Default index path resolution remains in `cmd`; MCP reuses `search.Query`, `search.Response`, and `search.GetResponse`.
+## MCP Adapter
+
+Own typed tool adaptation with a launch-scoped `project` enum, project-keyed in-memory state (one validated entry per launched project), select-then-reload with stable fingerprints scoped to the selected project, degraded startup warnings, and cancellation boundaries. Default index path resolution remains in `cmd`; MCP reuses `search.Response` and `search.GetResponse` and never duplicates retrieval behavior.
 
 ## Data Flow
 
 ```text
-index command: root -> cards.Load -> index.Build -> index.Write
-CLI retrieval: flags -> index.Load -> search.Search/Get -> formatter
-MCP retrieval: typed validation -> stable reload -> search.Search/Get -> SDK output
+index command: registry -> project root -> cards.Load -> index.Build -> index.Write
+CLI retrieval: flags -> registry lookup -> index.Load -> search.Search/Get -> formatter
+MCP retrieval: typed validation -> select project -> stable per-project reload -> search.Search/Get -> SDK output
 ```
 
 Trace the whole affected path, but change behavior in its owner only.
@@ -65,7 +80,7 @@ Trace the whole affected path, but change behavior in its owner only.
 - Preserve deterministic discovery, map output, scoring, reason, and JSON ordering.
 - Keep stdout/stderr out of reusable packages. MCP stdout belongs exclusively to SDK transport.
 - Do not read files cited by card `paths`.
-- Do not add HTTP, databases, watchers, embeddings, background workers, or multi-root routing without an explicit requirement.
+- Do not add HTTP, databases, watchers, embeddings, background workers, or corpus inference. One process serves the projects configured at launch; every retrieval call names exactly one project resolved through the registry (`docs/planning/project-scoped-knowledgebase.md`). Tool inputs cannot select roots, index paths, or write operations.
 
 ## Common Change Recipes
 

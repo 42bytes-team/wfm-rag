@@ -9,31 +9,33 @@ Load `go-backend` and `go-test-writing`. Verify APIs against the exact official 
 
 ## Concrete Surface
 
-- `internal/mcpserver.GetInput`: exact get schema.
-- `internal/mcpserver.ErrReload`: changed-index load failure.
-- `internal/mcpserver.New`: initial validated index load and typed server construction.
-- `internal/mcpserver.Run`: one session over a supplied SDK transport.
-- `cmd/wfm-rag.runMCP`: flags, index-path resolution, and real `mcp.StdioTransport` startup.
+- `internal/mcpserver.Source`: one launched project — ID, canonical root, index path.
+- `internal/mcpserver.SearchInput` / `GetInput`: closed-world envelopes with a required `project`.
+- `internal/mcpserver.ErrReload`: a selected project's index is missing, invalid, or changed and could not reload.
+- `internal/mcpserver.LoadWarning`: a launched project whose initial load failed; the server still starts degraded.
+- `internal/mcpserver.New`: per-source attempted load, typed server construction with the launch-scoped project enum, and warning reporting; `cmd` starts the real `mcp.StdioTransport` and prints warnings to stderr.
 
-Default index resolution belongs to `cmd`, not `mcpserver`.
+Default index resolution belongs to `cmd` and `internal/project`, not `mcpserver`.
 
 ## Fixed V0.1 Contract
 
 Expose exactly:
 
-- `agent_knowledge_search` with shared `search.Query` input and `search.Response` output;
+- `agent_knowledge_search` with `SearchInput` and shared `search.Response` output;
 - `agent_knowledge_get` with `GetInput` and shared `search.GetResponse` output.
 
-Both tools are read-only and closed-world. Never accept root, project, index path, write, shell, or indexing inputs. One process serves the root selected at startup.
+Both tools are read-only and closed-world. `project` is required and its schema carries a sorted enum of the IDs configured at launch; never accept root, index path, write, shell, or indexing inputs. One process serves the projects configured at launch, up to 64, chosen only through `mcp --project` / `mcp --all-projects`.
 
 Do not duplicate search/get behavior or output types in MCP.
 
+Each call reads exactly one project; there is no merged search and no cross-corpus ID resolution. A degraded project's tool error is written for the model to relay: `index_missing`, the project ID, the repair command `wfm-rag index --project <id>`, and the instruction not to retry with a different project.
+
 ## Handler Order
 
-1. SDK validates generated object schema and rejects unknown fields.
+1. SDK validates the generated object schema, the `project` enum, and rejects unknown fields.
 2. Handler performs semantic `search.ValidateQuery` or `search.ValidateID`.
 3. Check request cancellation.
-4. Inspect/reload configured index.
+4. Select the named project and inspect/reload only that project's index.
 5. Call shared `search.Search` or `search.Get`.
 6. Check cancellation after core work.
 7. Return typed output; SDK supplies structured content and JSON text fallback.
@@ -42,17 +44,17 @@ Validation must precede reload so invalid input remains an input error when the 
 
 ## Reload Contract
 
-The in-memory state is protected by a mutex. Before each valid search/get:
+The in-memory state holds one validated entry per launched project, protected by a mutex. Before each valid search/get for the selected project:
 
-1. Compare file size, modification time, and identity (`os.SameFile`).
-2. If unchanged, use current validated value.
-3. If changed, stat before load.
+1. Compare the project's index file size, modification time, and identity (`os.SameFile`).
+2. If unchanged and loaded, use the current validated value.
+3. If changed or degraded, stat before load.
 4. Call root-bound `index.Load`.
 5. Stat after load.
 6. Reject if the fingerprint changed during loading.
-7. Publish only the stable validated value.
+7. Publish only the stable validated value for that project.
 
-Return `ErrReload` on a changed index that cannot load. Never silently serve stale memory. A later valid replacement must recover without process restart.
+Return `ErrReload`-wrapped actionable text when the selected project's index changed and cannot load. Other projects are unaffected; the server never serves a partially refreshed project and never silently serves stale memory. A later valid replacement must recover without process restart.
 
 ## Stdio Safety
 
@@ -83,6 +85,7 @@ In-memory tests cover handler semantics. Real subprocess tests cover:
 - search/get calls and CLI parity;
 - structured/text semantic equality;
 - running-process atomic reload;
+- multi-project launch with per-project isolation, degraded-project startup warnings with recovery without a client restart, and per-project reload failure;
 - protocol-only stdout and stderr isolation;
 - request cancellation;
 - stdin EOF shutdown;
