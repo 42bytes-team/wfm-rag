@@ -81,6 +81,7 @@ Trace the whole affected path, but change behavior in its owner only.
 - Keep stdout/stderr out of reusable packages. MCP stdout belongs exclusively to SDK transport.
 - Do not read files cited by card `paths`.
 - Do not add HTTP, databases, watchers, embeddings, background workers, or corpus inference. One process serves the projects configured at launch; every retrieval call names exactly one project resolved through the registry (`docs/planning/project-scoped-knowledgebase.md`). Tool inputs cannot select roots, index paths, or write operations.
+- Change public behavior and its documentation together. `README.md` plus the focused `docs/` owner update in the same change; AGENTS.md "Documentation Sync" names which section each change touches.
 
 ## Common Change Recipes
 
@@ -114,4 +115,4 @@ go test -race -count=1 ./...
 go vet ./...
 ```
 
-Run `go mod verify` for dependency changes and review docs whenever public behavior changes.
+Run `go mod verify` for dependency changes. Treat an unupdated `README.md` or focused doc as an unfinished change, not as a later documentation pass.

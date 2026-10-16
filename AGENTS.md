@@ -170,6 +170,22 @@ Never implement ranking, filters, excerpts, or exact retrieval separately in an 
 - KB skeleton/templates/starter skill: change `internal/scaffold` assets, keep create-only semantics, and update `docs/knowledge-authoring.md`.
 - Public behavior/limits/client compatibility: update the corresponding human docs and this file/skills when agent workflow changes.
 
+## Documentation Sync
+
+`README.md` is the human operational contract. A change that alters anything README states must update README in the same change, not in a later documentation pass. Update the focused `docs/` owner too: README carries the tour and the short contract, and the focused doc carries the complete one.
+
+| Change touches | Update here |
+| --- | --- |
+| commands, flags, defaults, output fields, exit codes, error codes | `README.md` (CLI Reference) and `docs/cli.md` |
+| install steps, Go version, dependencies, state directory, file modes | `README.md` (Install, State Directory) and `docs/index-format.md` |
+| onboarding flow, `project init` behavior, scaffolding, registry or healthcheck semantics | `README.md` (Onboarding) and `docs/cli.md` |
+| MCP client setup, tool names, input schemas, launch allowlist, degraded startup | `README.md` (Connect An LLM Through MCP) and `docs/mcp-clients.md` |
+| card categories, types, statuses, frontmatter fields, lifecycle steps, limits | `README.md` (Knowledgebase) and `docs/knowledge-authoring.md` |
+| package ownership, data flow, internal invariants | `docs/architecture.md`; README keeps only the summary diagram |
+| symptoms and repair commands | `docs/troubleshooting.md`; README carries no troubleshooting list |
+
+Never restate one full contract in two places. When README and a focused doc disagree, fix both against the source and tests rather than copying one into the other.
+
 ## Work Process
 
 1. Identify the owning package from this map.
@@ -178,7 +194,7 @@ Never implement ranking, filters, excerpts, or exact retrieval separately in an 
 4. Change the owner, not an adapter.
 5. Preserve public contracts unless an explicit plan changes them.
 6. Add focused success and important failure tests.
-7. Update all affected public/agent contracts.
+7. Update every affected contract in the same change: `README.md` whenever the change touches what README describes, then the focused `docs/` owner, then this file and the skills when agent workflow changes.
 8. Run formatting, race tests, vet, and relevant module/diff checks.
 9. Review for scope growth, nondeterminism, unsafe filesystem behavior, and stdout contamination.
 

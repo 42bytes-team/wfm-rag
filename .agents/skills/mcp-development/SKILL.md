@@ -97,7 +97,7 @@ Do not make fast production search/get artificially block for cancellation tests
 
 ## Client Documentation
 
-Update `docs/mcp-clients.md` when executable arguments, tool schemas, transport, compatibility, or lifecycle changes. OpenCode and OMP use different config shapes; verify their current schemas rather than guessing.
+Update `docs/mcp-clients.md` when executable arguments, tool schemas, transport, compatibility, or lifecycle changes, and update the `README.md` "Connect An LLM Through MCP" section in the same change. OpenCode and OMP use different config shapes; verify their current schemas rather than guessing.
 
 Shapes verified against OpenCode 2.0.26 and OMP 18.8.9:
 

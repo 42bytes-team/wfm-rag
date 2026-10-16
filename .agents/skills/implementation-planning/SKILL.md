@@ -54,4 +54,4 @@ Reject speculative databases, HTTP transport, embeddings, watchers, background w
 
 ## Documentation
 
-Planning docs record decisions. Public operation belongs in README and focused docs; agent workflow belongs in AGENTS/skills. Include documentation updates in every behavior-changing plan.
+Planning docs record decisions. Public operation belongs in README and focused docs; agent workflow belongs in AGENTS/skills. Include documentation updates in every behavior-changing plan, and name the affected `README.md` section (Install, Onboarding, Connect An LLM Through MCP, CLI Reference, Knowledgebase) plus the focused `docs/` owner in the impact checklist. AGENTS.md "Documentation Sync" maps each change type to both.

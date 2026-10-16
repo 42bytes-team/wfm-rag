@@ -63,6 +63,8 @@ Reject duplicated adapter behavior.
 ## Documentation Checks
 
 - README/docs match executable behavior and distinguish unsupported HTTP/list/write operations.
+- A behavior change that ships without the matching `README.md` update is a finding. AGENTS.md "Documentation Sync" names the section and the focused `docs/` owner.
+- README and the focused doc describe one contract each. Flag a full contract duplicated between them, or a disagreement between the two.
 - AGENTS/skills route future changes to the right owner and test boundary.
 - Commands/examples are copy-paste correct and use current config schemas.
 
