@@ -433,24 +433,77 @@ The index contains complete card Markdown and is created with mode `0600`. See [
 
 ## Connect An LLM Through MCP
 
-Build the project's index first. The client launches the stdio process; do not start a second standalone process.
+The client launches the stdio process; do not start a second standalone process. Prepare the project first:
 
-Generic configuration:
+```bash
+GOBIN="$HOME/.local/bin" go install ./cmd/wfm-rag
+wfm-rag project init example --dir /absolute/path/to/repository
+wfm-rag index --project example
+wfm-rag project list
+```
+
+Every entry below repeats `--project` once per repository that process may serve, up to 64, or uses `--all-projects` to serve the whole registry. `mcp` accepts no index path: served projects always use their derived index.
+
+### OpenCode
+
+Project `opencode.json`. V2 places servers under `mcp.servers`, not directly under `mcp`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "example-agent-knowledge": {
+        "type": "local",
+        "command": ["/home/alice/.local/bin/wfm-rag", "mcp", "--project", "example"]
+      }
+    }
+  }
+}
+```
+
+Or let OpenCode write the entry, then confirm the connection:
+
+```bash
+opencode mcp add example-agent-knowledge -- /home/alice/.local/bin/wfm-rag mcp --project example
+opencode mcp list
+```
+
+`type: "local"` and the full `command` array are required. `disabled: true` keeps an entry configured but unconnected — V2 has no `enabled` field — and `environment`, not `env`, sets process variables. `codemode` defaults to `true`, which exposes MCP tools through Code Mode; set it to `false` to expose `agent_knowledge_search` and `agent_knowledge_get` directly. Restart OpenCode after a manual edit because configuration is loaded at startup.
+
+### OMP (Oh My Pi)
+
+Project `.omp/mcp.json` — keyed to the working directory, so start OMP from the repository root — or user-level `~/.omp/agent/mcp.json`:
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
+  "mcpServers": {
+    "agent-knowledge": {
+      "type": "stdio",
+      "command": "/home/alice/.local/bin/wfm-rag",
+      "args": ["mcp", "--project", "api", "--project", "frontend"]
+    }
+  }
+}
+```
+
+`command` is required; `type` may be omitted because discovery infers stdio from a command entry. Verify inside a session with `/mcp list` and `/mcp test agent-knowledge`. OMP exposes the tools under `mcp__`-prefixed names such as `mcp__agent_knowledge_search`. Restart OMP after manually editing an MCP file, and give each repository a unique server name so an imported global entry cannot shadow the project entry.
+
+### Generic stdio client
 
 ```json
 {
   "mcpServers": {
     "agent-knowledge": {
       "command": "/home/alice/.local/bin/wfm-rag",
-      "args": [
-        "mcp",
-        "--project",
-        "example"
-      ]
+      "args": ["mcp", "--project", "example"]
     }
   }
 }
 ```
+
+Some clients call the map `servers` or put the executable and arguments in one array. Adapt only the envelope: the process contract is `mcp --project <id>` on stdio, protocol JSON on stdout only, diagnostics on stderr only, and shutdown by closing stdin.
 
 The server exposes exactly:
 
@@ -459,7 +512,7 @@ The server exposes exactly:
 
 Both inputs are closed-world (`additionalProperties: false`) and constrain `project` to a sorted enum of the IDs allowlisted at launch. Inputs cannot contain a repository path, index path, write operation, or shell command. Registry membership is fixed at launch: `project init` and `project remove` change a running server only after the client restarts it, while rebuilt index content reloads live. A configured project with a missing or invalid index degrades to a stderr startup warning and an actionable per-call error naming the repair command; healthy projects keep serving.
 
-Full OpenCode, OMP (Oh My Pi), generic-client, multi-project, tool-schema, degraded-project, and client-specific troubleshooting instructions are in [`docs/mcp-clients.md`](docs/mcp-clients.md).
+Field tables, precedence and name-shadowing rules, multi-project cost, tool schemas, degraded-project behavior, and client-specific troubleshooting are in [`docs/mcp-clients.md`](docs/mcp-clients.md).
 
 ## HTTP Server
 

@@ -98,3 +98,9 @@ Do not make fast production search/get artificially block for cancellation tests
 ## Client Documentation
 
 Update `docs/mcp-clients.md` when executable arguments, tool schemas, transport, compatibility, or lifecycle changes. OpenCode and OMP use different config shapes; verify their current schemas rather than guessing.
+
+Shapes verified against OpenCode 2.0.26 and OMP 18.8.9:
+
+- OpenCode: servers live under `mcp.servers`; `type: "local"` plus a full `command` array are required; `disabled` replaces `enabled`; `environment` (never `env`), `cwd`, `codemode`, and `timeout` are optional; a same-named project entry replaces the whole server object.
+- OMP: `.omp/mcp.json` for the project and `~/.omp/agent/mcp.json` for the active profile, both using `mcpServers` with `command`, `args`, and an optional `type` that defaults to stdio; OMP-native config outranks imported OpenCode config.
+- Confirm discovery with `opencode mcp list`, `opencode debug config`, and OMP's `/mcp list` or `/mcp test <name>` before stating client behavior.

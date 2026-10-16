@@ -105,22 +105,27 @@ Use an installed binary instead of `go run` for stable startup.
 opencode mcp list
 ```
 
+The list prints each configured server with its status (`connected`, `pending`, `disabled`). A server that never appears is usually a shape problem: V2 reads servers from `mcp.servers`, and an entry under a key OpenCode does not read contributes nothing. `opencode debug config` shows the resolved configuration, including normalized legacy entries.
+
 After manually changing OpenCode configuration, quit and restart OpenCode. It loads configuration at startup.
 
 See `docs/mcp-clients.md` for the exact current schema.
 
 ## OMP
 
-Launch OMP from the repository root or use `omp --cwd /absolute/repository/root`. OMP 17.1.5 does not search ancestors for MCP project files.
+Project MCP configuration is `.omp/mcp.json`, keyed to the working directory, so launch OMP from the repository root or use `omp --cwd /absolute/repository/root`. User-level configuration is `~/.omp/agent/mcp.json`, or `~/.omp/profiles/<name>/agent/mcp.json` for a named profile.
 
-After manually editing an MCP file, restart OMP 17.1.5, then run:
+Inside a session:
 
 ```text
 /mcp list
 /mcp test agent-knowledge
+/mcp reconnect agent-knowledge
 ```
 
-Global OpenCode config can shadow same-named project OpenCode config when imported by OMP. Use unique per-repository names or an OMP-native project entry.
+`/mcp list` also shows which file a server came from. A same-named definition in a higher-priority source wins and the lower one is silently replaced, so an imported global OpenCode entry can bind OMP to a different `--project` allowlist than the project entry you edited. Use unique per-repository names such as `api-agent-knowledge`, or define the server in `.omp/mcp.json`, which outranks every imported OpenCode entry. `disabledServers` in the active profile's user file hides a discovered server by name regardless of its source.
+
+`/mcp reload` rediscovers after OMP-managed changes. After an edit made by another editor, restart OMP when `/mcp list` still reports stale contents.
 
 ## Recovery Guarantees
 
@@ -128,3 +133,5 @@ Global OpenCode config can shadow same-named project OpenCode config when import
 - A temporary write failure does not replace the previous valid index.
 - MCP does not serve a stale snapshot after detecting a broken replacement.
 - Rebuilding a valid index allows a running MCP process to recover on the next valid search/get.
+- A `project` command that cannot take the writer lock leaves the previous registry untouched.
+- `project remove` deletes only the registry entry; repository files and index files are never deleted by it.

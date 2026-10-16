@@ -51,81 +51,107 @@ Re-run `wfm-rag index --project <id>` after editing knowledge cards. A running M
 
 ## OpenCode
 
-Add the server to the target repository's `opencode.json` or to the global `~/.config/opencode/opencode.json`. Project configuration is recommended because the allowlist is explicit per client.
+Verified against OpenCode 2.0.26. Add the server to the target repository's `opencode.json` or `opencode.jsonc`, or to the global `~/.config/opencode/opencode.json`. Project configuration is recommended because the allowlist is explicit per client.
+
+V2 places servers under `mcp.servers`, not directly under `mcp`:
 
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
   "mcp": {
-    "agent-knowledge": {
-      "type": "local",
-      "command": [
-        "/home/alice/.local/bin/wfm-rag",
-        "mcp",
-        "--project",
-        "api"
-      ],
-      "enabled": true
+    "servers": {
+      "api-agent-knowledge": {
+        "type": "local",
+        "command": [
+          "/home/alice/.local/bin/wfm-rag",
+          "mcp",
+          "--project", "api",
+          "--project", "frontend"
+        ]
+      }
     }
   }
 }
 ```
 
-OpenCode's `command` field is one array containing the executable and every argument. The current schema uses `environment`, not `env`, when environment variables are needed.
-
-After changing configuration, quit and restart OpenCode because configuration is loaded at startup. Check the connection with:
+Or let OpenCode write the entry and then check it:
 
 ```bash
+cd /home/alice/projects/api
+opencode mcp add api-agent-knowledge -- /home/alice/.local/bin/wfm-rag mcp --project api
 opencode mcp list
 ```
 
-In a prompt, explicitly request the server and name the project when retrieval matters:
+`opencode mcp list` prints each configured server with its status (`connected`, `pending`, or `disabled`).
+
+Local server fields:
+
+| Field | Required | Effect |
+| --- | --- | --- |
+| `type` | yes | must be `"local"` |
+| `command` | yes | the executable followed by every argument, in one array |
+| `cwd` | no | process directory; a relative path resolves from the workspace |
+| `environment` | no | variables added to the inherited process environment; `{env:NAME}` substitutes from the caller. V2 does not read `env` |
+| `disabled` | no | `true` keeps the entry configured without connecting it; V2 has no `enabled` field |
+| `codemode` | no | `true` by default, which exposes MCP tools through Code Mode. Set `false` to expose `agent_knowledge_search` and `agent_knowledge_get` directly |
+| `timeout` | no | per-server timeout overrides in milliseconds |
+
+A higher-precedence project entry with the same name replaces the whole server object instead of merging with the global one, so repeat every field you need in the override, or use distinct names per repository.
+
+Older configurations that put server names directly under `mcp` with `enabled: true` are still read and normalized to `mcp.servers` with `disabled: false`, which is why a V1-era global entry keeps working. New entries should use the V2 shape above.
+
+After changing configuration, quit and restart OpenCode because configuration is loaded at startup. In a prompt, explicitly request the server and name the project when retrieval matters:
 
 ```text
 Use the agent-knowledge MCP tools to find repository guidance in project api for parsing a comma-separated config value, then retrieve the complete best-matching card.
 ```
 
-OpenCode prefixes MCP tool names with the configured server name in its tool registry. Restrict or enable those tools per agent with the `agent-knowledge_*` tool glob if needed.
-
 ## OMP (Oh My Pi)
 
-OMP can use its native project file `.omp/mcp.json`. Start OMP from the repository root, or select it explicitly with `omp --cwd /home/alice/projects/api`, because OMP 17.1.5 does not search ancestor directories for MCP configuration.
+Verified against OMP 18.8.9. OMP reads OMP-native MCP files before any imported third-party configuration.
+
+- Project: `.omp/mcp.json`. It is keyed to the working directory, so start OMP from the repository root.
+- User: `~/.omp/agent/mcp.json`, or `~/.omp/profiles/<name>/agent/mcp.json` when `omp --profile <name>` is active. A profile sees only its own user-level servers.
+- Portable fallback: root `mcp.json` or `.mcp.json`, which other MCP clients can also read.
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/v17.1.5/packages/coding-agent/src/config/mcp-schema.json",
+  "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
   "mcpServers": {
     "agent-knowledge": {
       "type": "stdio",
       "command": "/home/alice/.local/bin/wfm-rag",
       "args": [
         "mcp",
-        "--project",
-        "api",
-        "--project",
-        "frontend"
+        "--project", "api",
+        "--project", "frontend"
       ]
     }
   }
 }
 ```
 
-For a user-level definition, put the same content in `~/.omp/agent/mcp.json`. Named OMP profiles use `~/.omp/profiles/<name>/agent/mcp.json` instead.
+For a stdio entry, `command` is required and `type` may be omitted because discovery infers stdio from a command entry; keep `type: "stdio"` for a schema-valid, portable definition. `args`, `env`, and `cwd` are optional.
 
-OMP also imports project and global OpenCode MCP configuration. If the OpenCode configuration above applies to the same repository, OMP can use it directly when OMP is launched from that repository root. Prefer either the imported OpenCode entry or an OMP-native entry; do not maintain duplicate definitions unless an OMP-specific override is required.
+Precedence and shadowing:
 
-OMP encounters global OpenCode configuration before project OpenCode configuration. If both scopes use the same server name, the global definition wins and may bind OMP to the wrong allowlist. Use a unique per-repository name such as `api-agent-knowledge`, or add an OMP-native project definition, which has higher discovery priority than imported OpenCode entries.
+- Within OMP-native config, project `.omp/mcp.json` precedes the active profile's user file.
+- OMP-native config outranks imported third-party config (Claude Code, Agent Plugins, Codex, Gemini CLI, OpenCode, Cursor, Windsurf, VS Code, then root `mcp.json` / `.mcp.json`), and the first definition of a name wins. Duplicate names are not merged.
+- A same-named entry in a higher-priority source silently replaces the lower one, so an imported global OpenCode entry can bind OMP to a different allowlist than the project entry you edited. Use unique per-repository names such as `api-agent-knowledge`, or add an OMP-native project entry, which outranks every imported OpenCode entry.
+- `disabledServers` in the active profile's user file hides a discovered server by name regardless of its source. `mcp.enableProjectConfig: false` excludes every project-level source, letting a same-named user entry survive.
 
-OMP 17.1.5 can retain cached file contents across `/mcp reload` after an external editor changes or creates an MCP file. Quit and restart OMP after manual edits. Once restarted, use these commands inside the session:
+In-session commands:
 
 ```text
 /mcp list
 /mcp test agent-knowledge
+/mcp reconnect agent-knowledge
+/mcp reload
 ```
 
-`/mcp reload` is reliable after OMP-managed changes such as `/mcp add`, enable, or disable. Newer OMP releases may also invalidate externally edited files during reload.
+`/mcp add`, `/mcp enable`, and `/mcp disable` write OMP-managed files and add the `$schema` line automatically; `/mcp reload` rediscovers after those managed changes. After an edit made by another editor, restart OMP when `/mcp list` still reports stale file contents.
 
-OMP exposes MCP tools with an `mcp__`-prefixed, normalized runtime name. Use `/mcp list` rather than depending on a hand-constructed runtime name.
+OMP exposes each server's tools under an `mcp__`-prefixed normalized name, for example `mcp__agent_knowledge_search`. Use `/mcp list` rather than constructing a runtime name by hand.
 
 ## Generic Stdio Client
 
@@ -157,7 +183,7 @@ Some clients call the map `servers`, require `type: "stdio"`, or place the execu
 
 If the process does not exit within a reasonable client timeout after stdin closes, send `SIGTERM`, wait again, and use `SIGKILL` only as the final fallback.
 
-The repository subprocess suite directly covers the current `server/discover` handshake. The pinned SDK also accepts the earlier `initialize` flow used by clients such as OMP; OMP 17.1.5 was manually validated during client onboarding, but that older first-frame sequence is not yet a dedicated repository subprocess test. A conforming client should negotiate the protocol rather than sending tool requests before initialization completes.
+The repository subprocess suite directly covers the current `server/discover` handshake. The pinned SDK also accepts the earlier `initialize` flow that some clients send first, and both OpenCode 2.0.26 and OMP 18.8.9 connect to this server in the operator's own configuration, but that older first-frame sequence is not yet a dedicated repository subprocess test. A conforming client should negotiate the protocol rather than sending tool requests before initialization completes.
 
 ## Tool Schemas
 
@@ -323,7 +349,7 @@ Check the server with the CLI first, then inspect client-specific status:
 opencode mcp list
 ```
 
-For OMP 17.1.5, restart after manually editing MCP files, then run `/mcp list` and `/mcp test agent-knowledge`. Check client logs or captured stderr for startup errors. Any wrapper around `wfm-rag` must keep stdout completely free of banners and diagnostics.
+For OMP, run `/mcp list` and `/mcp test agent-knowledge`, and restart OMP if a manually edited MCP file still shows stale contents. Check client logs or captured stderr for startup errors. Any wrapper around `wfm-rag` must keep stdout completely free of banners and diagnostics.
 
 ### A tool call cannot select another project or modify files
 
