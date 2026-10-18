@@ -118,8 +118,8 @@ It never opens index file contents for `list`. Registry persistence touches only
 
 Owns:
 
-- the embedded KB skeleton assets: `schema.md`, eight card templates, and the starter agent-knowledge skill with a `{{PROJECT}}` placeholder;
-- create-only application of that skeleton into a target repository: missing files are written, existing files, directories, and symlinks are never modified, and a wrong-kind skeleton path is a refusal.
+- the embedded KB skeleton assets: the knowledge `README.md` carrying the profile-filling prompt, `schema.md`, eight card templates, and the starter agent-knowledge skill with a `{{PROJECT}}` placeholder;
+- create-only application of that skeleton into a target repository: every operation is anchored to an opened root descriptor of that repository, missing files are created exclusively, existing files, directories, and symlinks are never modified, and a wrong-kind skeleton path is a refusal.
 
 It is invoked only by `project init`. No retrieval, registry, or index state ever lands in a target repository.
 

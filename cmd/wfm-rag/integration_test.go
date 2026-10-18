@@ -434,7 +434,7 @@ func TestFreshCloneEndToEnd(t *testing.T) {
 
 	stdout, stderr, code := execute(t, "project", "init", "api", "--dir", clone)
 	if code != 0 || stderr != "" || !strings.HasPrefix(stdout, "Registered api -> "+clone+"\n") ||
-		!strings.Contains(stdout, "Scaffolded 10 knowledge-base files:") {
+		!strings.Contains(stdout, "Scaffolded 11 knowledge-base files:") {
 		t.Fatalf("init: code=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
 	stdout, stderr, code = execute(t, "index", "--project", "api")
@@ -478,10 +478,11 @@ func TestProjectInitScaffoldsEmptyDirectoryIntoWorkingKB(t *testing.T) {
 	fresh := t.TempDir()
 
 	stdout, stderr, code := execute(t, "project", "init", "newproj", "--dir", fresh)
-	if code != 0 || stderr != "" || !strings.Contains(stdout, "Scaffolded 10 knowledge-base files:") {
+	if code != 0 || stderr != "" || !strings.Contains(stdout, "Scaffolded 11 knowledge-base files:") {
 		t.Fatalf("init: code=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
 	for _, rel := range []string{
+		".agents/knowledge/README.md",
 		".agents/knowledge/schema.md",
 		".agents/skills/agent-knowledge/SKILL.md",
 	} {

@@ -66,7 +66,7 @@ Also run `go mod verify` after dependency/module changes and `git diff --check` 
 | `internal/index/index.go` | versioned JSON, flattening, structural validation, state directory and default path, bounded loading, atomic writes | `internal/index/index_test.go`, `docs/index-format.md` |
 | `internal/search/search.go` | query/filter/ID validation, normalization, filters, ranking, reasons, card dedup, excerpts, exact get | `internal/search/search_test.go`, `docs/architecture.md` |
 | `internal/project/project.go` | project registry read/write/validate, flock writer lock, ID rules, statuses, healthcheck sweep, dangling-index purge, error sentinels | `internal/project/project_test.go`, `docs/cli.md` |
-| `internal/scaffold/scaffold.go` | embedded KB skeleton (category dirs, `schema.md`, card templates, starter agent-knowledge skill) created create-only by `project init` | `internal/scaffold/scaffold_test.go`, `docs/knowledge-authoring.md` |
+| `internal/scaffold/scaffold.go` | embedded KB skeleton (category dirs, KB `README.md` carrying the profile prompt, `schema.md`, card templates, starter agent-knowledge skill) created create-only by `project init` | `internal/scaffold/scaffold_test.go`, `docs/knowledge-authoring.md` |
 | `internal/mcpserver/server.go` | two typed read-only tools, project-keyed state (one entry per launched project), select-then-reload, cancellation, SDK transport adapter | `internal/mcpserver/server_test.go`, command integration tests, `docs/mcp-clients.md` |
 | `internal/testdata/corpus` | realistic shared integration corpus | command integration tests |
 
@@ -76,7 +76,7 @@ Also run `go mod verify` after dependency/module changes and `git diff --check` 
 - Index: `Build`, `Rebuild`, `StateDir`, `DefaultPath`, `DefaultPathFromCanonical`, `Write`, `Load`, `Version`; `Index`, `Document`, `BuildResult`; `MaxIndexBytes` and index sentinels.
 - Search: `ValidateQuery`, `Search`, `ValidateID`, `Get`; `Query`, `Response`, `Result`, `GetResponse`; bounds and `ErrInvalidArguments`/`ErrCardNotFound`. Retrieval always operates on exactly one index and one named project.
 - Project: `Load`, `Init`, `Remove`, `Statuses`, `Healthcheck`, `PurgeDangling`, `ProjectPaths`, `RegistryPath`; `Registry`, `Entry`, `InitResult`, `Status`, `Finding`; `MaxRegistryBytes`, `MaxProjects` and registry sentinels.
-- Scaffold: `Ensure(root, projectID)` returns the created repository-relative paths.
+- Scaffold: `Ensure(root, projectID)` returns the created repository-relative paths; `ReadProfileStatus(root)` returns `ProfileStatus{Incomplete, PromptFile}` for the starter profile; `KBReadmeFile` and `SkillFile` name the scaffolded paths.
 - MCP: `Source`, `LoadWarning`, `New`, `ErrReload`, `SearchInput`, `GetInput`.
 - Command package: unexported `run` dispatches `runIndex`, `runSearch`, `runGet`, `runMCP`, and `runProject`; it is the CLI test seam.
 
@@ -125,7 +125,7 @@ Never implement ranking, filters, excerpts, or exact retrieval separately in an 
 - Only active cards enter index documents/chunks; inactive cards are still parsed and validated.
 - `paths` are citations/ranking hints, never permission to read source files.
 - Limits: 1 MiB/card, 100 MiB corpus, 10,000 cards, 256-byte ID, 8,000-rune chunk, 512 MiB index.
-- `project init` is the only command that writes into a target repository, and only as a create-only skeleton: category directories, `.agents/knowledge/schema.md`, `.agents/knowledge/templates/*.md`, and `.agents/skills/agent-knowledge/SKILL.md`. Existing files, directories, and symlinks are never overwritten, displaced, or written through; a wrong-kind skeleton path is a `project_scaffold_failed` error and the registration itself still stands. No identity or retrieval state is ever stored in a target repository.
+- `project init` is the only command that writes into a target repository, and only as a create-only skeleton: category directories, `.agents/knowledge/README.md`, `.agents/knowledge/schema.md`, `.agents/knowledge/templates/*.md`, and `.agents/skills/agent-knowledge/SKILL.md`. Every scaffold operation is anchored to an opened root descriptor of the target repository, so no write can leave it. The scaffolded knowledge `README.md` is documentation, never a card candidate, and carries the prompt that fills the starter skill's `Repository Profile`. Existing files, directories, and symlinks are never overwritten, displaced, or written through; a wrong-kind skeleton path is a `project_scaffold_failed` error and the registration itself still stands. No identity or retrieval state is ever stored in a target repository.
 
 ## Index Invariants
 
@@ -167,7 +167,7 @@ Never implement ranking, filters, excerpts, or exact retrieval separately in an 
 - CLI flags/output/errors: change `cmd/wfm-rag`, preserve streams/codes, update README/CLI docs.
 - MCP tools/reload/protocol: change `internal/mcpserver`, verify pinned SDK signatures, run unit and subprocess tests.
 - Project registry/statuses/healthcheck: change `internal/project`, preserve the flock lock and atomic-write contract, and update CLI docs.
-- KB skeleton/templates/starter skill: change `internal/scaffold` assets, keep create-only semantics, and update `docs/knowledge-authoring.md`.
+- KB skeleton/README prompt/templates/starter skill: change `internal/scaffold` assets, keep create-only semantics, and update `docs/knowledge-authoring.md`.
 - Public behavior/limits/client compatibility: update the corresponding human docs and this file/skills when agent workflow changes.
 
 ## Documentation Sync

@@ -27,7 +27,7 @@ Every command names a project. Read the project ID from this repository's Profil
 wfm-rag project list
 ```
 
-If this repository is not registered yet, register it once from its root (`wfm-rag project init <id>`), then index it. `init` also scaffolds the missing KB skeleton (category directories, `schema.md`, card templates, and this starter skill with the project ID rendered in) — create-only, never overwriting existing files. Never hard-code a machine path; the registry maps the ID to the canonical root, and the index path is derived from that root.
+If this repository is not registered yet, register it once from its root (`wfm-rag project init <id>`), then index it. `init` also scaffolds the missing KB skeleton (category directories, the knowledge `README.md` carrying the profile-filling prompt, `schema.md`, card templates, and this starter skill with the project ID rendered in) — create-only, never overwriting existing files. Fill the starter skill's `Repository Profile` with that prompt before the first retrieval task. Never hard-code a machine path; the registry maps the ID to the canonical root, and the index path is derived from that root.
 
 The default profile assumes `wfm-rag` is on `PATH` and all commands use the project's derived index. If the repository profile declares an absolute binary or `--index`, use it consistently for index/search/get/MCP.
 

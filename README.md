@@ -70,7 +70,9 @@ wfm-rag index --project api
 wfm-rag search --project api "config parser"
 ```
 
-`project init` registers the project and creates every missing part of the knowledge base in the target repository: the category directories, `.agents/knowledge/schema.md`, the card templates, and a starter `agent-knowledge` skill with the project ID rendered in. Scaffolding is create-only. Existing files are never overwritten, so a customized repository keeps its own copies.
+`project init` registers the project and creates every missing part of the knowledge base in the target repository: the category directories, `.agents/knowledge/README.md`, `.agents/knowledge/schema.md`, the card templates, and a starter `agent-knowledge` skill with the project ID rendered in. Scaffolding is create-only. Existing files are never overwritten, so a customized repository keeps its own copies.
+
+The starter skill's `Repository Profile` is intentionally left as placeholders. Hand the prompt in the scaffolded `.agents/knowledge/README.md` to the agent that will work in that repository, once, before its first task: it fills the profile with the real retrieval triggers and verification commands that retrieval quality depends on. `project init` prints this next step whenever it scaffolds files into a starter skill that still carries those placeholders; a no-op refresh prints nothing extra.
 
 `project init` uses the working directory. Pass `--dir /home/alice/projects/api` to register another path. The command is idempotent: a new ID registers, the same directory refreshes, and a different directory rebinds the ID and reports the previous root.
 

@@ -206,8 +206,10 @@ reusable lesson that outlives the entry graduates to a `patterns/` or
 
 ## Repository Profile
 
-Fill this section in whenever the skill is copied into a repository. Keep every
-repository-specific rule here and never fork the generic sections above.
+Fill this section in whenever the skill is copied into a repository. `project
+init` leaves the last two bullets as placeholders; `.agents/knowledge/README.md`
+carries the prompt that fills them. Keep every repository-specific rule here and
+never fork the generic sections above.
 
 - Project ID: `{{PROJECT}}`.
 - Root: resolve with `git rev-parse --show-toplevel`.

@@ -525,6 +525,17 @@ func runProjectInit(args []string, stdout io.Writer, failureFormat *outputFormat
 				return classifyError(fmt.Errorf("write project output: %w", err))
 			}
 		}
+		// The hint is optional presentation. A no-op init stays quiet, and an
+		// unreadable customized profile never fails a completed registration.
+		if status, err := scaffold.ReadProfileStatus(result.Root); err == nil && status.Incomplete {
+			prompt := ""
+			if status.PromptFile != "" {
+				prompt = fmt.Sprintf(" (prompt: %s)", status.PromptFile)
+			}
+			if _, err := fmt.Fprintf(stdout, "Next: fill the Repository Profile section of %s with this repository's real values%s, then run wfm-rag index --project %s\n", scaffold.SkillFile, prompt, result.ID); err != nil {
+				return classifyError(fmt.Errorf("write project output: %w", err))
+			}
+		}
 	}
 	return nil
 }

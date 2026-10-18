@@ -10,7 +10,7 @@ Knowledge lives as version-controlled Markdown in the target repository. Never e
 
 After every source change, run a complete `wfm-rag index` build.
 
-A new KB bootstraps itself: `wfm-rag project init <id>` registers the project and creates the missing skeleton — the category directories, `.agents/knowledge/schema.md`, the eight card templates under `.agents/knowledge/templates/`, and a starter `.agents/skills/agent-knowledge/SKILL.md` with the project ID rendered in. Scaffolding is create-only: existing files are never overwritten, so a repository may keep its customized copies. Route matching tasks to the skill from `AGENTS.md`; keep repository-specific changes in the skill's final profile section so future synchronization stays easy.
+A new KB bootstraps itself: `wfm-rag project init <id>` registers the project and creates the missing skeleton — the category directories, `.agents/knowledge/README.md`, `.agents/knowledge/schema.md`, the eight card templates under `.agents/knowledge/templates/`, and a starter `.agents/skills/agent-knowledge/SKILL.md` with the project ID rendered in. Scaffolding is create-only: existing files are never overwritten, so a repository may keep its customized copies. Route matching tasks to the skill from `AGENTS.md`; keep repository-specific changes in the skill's final profile section so future synchronization stays easy, and fill that profile with the prompt in the scaffolded knowledge `README.md` before the first retrieval task.
 
 ## Discoverable Categories
 

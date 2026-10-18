@@ -202,32 +202,39 @@ func TestProjectInitRebindRefresh(t *testing.T) {
 
 	stdout, stderr, code := execute(t, "project", "init", "api", "--dir", first)
 	if code != 0 || stderr != "" || !strings.HasPrefix(stdout, "Registered api -> "+first+"\n") ||
-		!strings.Contains(stdout, "Scaffolded 10 knowledge-base files:") {
+		!strings.Contains(stdout, "Scaffolded 11 knowledge-base files:") ||
+		!strings.Contains(stdout, "Next: fill the Repository Profile") {
 		t.Fatalf("first init: code=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
 	stdout, stderr, code = execute(t, "project", "init", "api", "--dir", first)
 	if code != 0 || stderr != "" || stdout != "Refreshed api -> "+first+"\n" {
-		t.Fatalf("refresh: code=%d stdout=%q stderr=%q; a completed skeleton must not be re-scaffolded", code, stdout, stderr)
+		t.Fatalf("refresh: code=%d stdout=%q stderr=%q; a completed skeleton must not be re-scaffolded and a no-op init must stay quiet", code, stdout, stderr)
 	}
 	stdout, stderr, code = execute(t, "project", "init", "api", "--dir", second)
 	if code != 0 || stderr != "" || !strings.HasPrefix(stdout, "Rebound api: "+first+" -> "+second+"\n") ||
-		!strings.Contains(stdout, "Scaffolded 10 knowledge-base files:") {
+		!strings.Contains(stdout, "Scaffolded 11 knowledge-base files:") {
 		t.Fatalf("rebind: code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	stdout, stderr, code = execute(t, "project", "init", "api", "--dir", second)
+	if code != 0 || stderr != "" || stdout != "Refreshed api -> "+second+"\n" {
+		t.Fatalf("rebind refresh: code=%d stdout=%q stderr=%q; nothing was created, so no scaffold list or hint is expected", code, stdout, stderr)
 	}
 
 	stdout, stderr, code = execute(t, "project", "init", "api", "--dir", third, "--format", "json")
 	if code != 0 || stderr != "" {
 		t.Fatalf("json init: code=%d stdout=%q stderr=%q", code, stdout, stderr)
 	}
+	decoder := json.NewDecoder(strings.NewReader(stdout))
+	decoder.DisallowUnknownFields()
 	var result projectMutationOutput
-	if err := json.Unmarshal([]byte(stdout), &result); err != nil {
-		t.Fatal(err)
+	if err := decoder.Decode(&result); err != nil {
+		t.Fatalf("init JSON carries unexpected fields: %v", err)
 	}
 	if result.Project != "api" || result.Root != third || result.PreviousRoot != second || !result.Rebound || result.Created {
 		t.Errorf("init result = %#v, want rebind from %q to %q", result, second, third)
 	}
-	if len(result.Scaffolded) != 10 {
-		t.Errorf("init scaffolded %v, want 10 skeleton files in a fresh directory", result.Scaffolded)
+	if len(result.Scaffolded) != 11 {
+		t.Errorf("init scaffolded %v, want 11 skeleton files in a fresh directory", result.Scaffolded)
 	}
 
 	writeTestCard(t, third, "patterns/card.md", testCard("card", "pattern", "active", "# Card\n\nNeedle."))
@@ -241,6 +248,97 @@ func TestProjectInitRebindRefresh(t *testing.T) {
 	}
 	if indexed.Root != third {
 		t.Errorf("index built from %q, want rebound root %q", indexed.Root, third)
+	}
+}
+
+func TestProjectInitProfileHintTracksProfileState(t *testing.T) {
+	isolateState(t)
+	root := t.TempDir()
+	stdout, stderr, code := execute(t, "project", "init", "api", "--dir", root)
+	if code != 0 || stderr != "" ||
+		!strings.Contains(stdout, "Next: fill the Repository Profile") ||
+		!strings.Contains(stdout, "(prompt: .agents/knowledge/README.md)") {
+		t.Fatalf("first init: code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+
+	if err := os.Remove(filepath.Join(root, ".agents", "knowledge", "README.md")); err != nil {
+		t.Fatal(err)
+	}
+	stdout, stderr, code = execute(t, "project", "init", "api", "--dir", root)
+	if code != 0 || stderr != "" ||
+		!strings.Contains(stdout, "Scaffolded 1 knowledge-base files:") ||
+		!strings.Contains(stdout, "(prompt: .agents/knowledge/README.md)") {
+		t.Fatalf("recreated prompt: code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+
+	if err := os.WriteFile(filepath.Join(root, ".agents", "knowledge", "README.md"), []byte("# Our own KB notes\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(filepath.Join(root, ".agents", "knowledge", "templates", "reference.md")); err != nil {
+		t.Fatal(err)
+	}
+	stdout, stderr, code = execute(t, "project", "init", "api", "--dir", root)
+	if code != 0 || stderr != "" || !strings.Contains(stdout, "Scaffolded 1 knowledge-base files:") {
+		t.Fatalf("customized prompt: code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if !strings.Contains(stdout, "Next: fill the Repository Profile") || strings.Contains(stdout, "(prompt:") {
+		t.Errorf("init named a prompt file it did not scaffold: %q", stdout)
+	}
+
+	skill := filepath.Join(root, ".agents", "skills", "agent-knowledge", "SKILL.md")
+	content, err := os.ReadFile(skill)
+	if err != nil {
+		t.Fatal(err)
+	}
+	filled := strings.NewReplacer(
+		"<project-specific terms>", "index dispatch",
+		"<project-specific commands>", "go test ./...",
+	).Replace(string(content))
+	if err := os.WriteFile(skill, []byte(filled), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Remove(filepath.Join(root, ".agents", "knowledge", "templates", "pattern.md")); err != nil {
+		t.Fatal(err)
+	}
+	stdout, stderr, code = execute(t, "project", "init", "api", "--dir", root)
+	if code != 0 || stderr != "" || !strings.Contains(stdout, "Scaffolded 1 knowledge-base files:") {
+		t.Fatalf("recreated template: code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if strings.Contains(stdout, "Next:") {
+		t.Errorf("init hinted at an already filled profile: %q", stdout)
+	}
+}
+
+func TestProjectInitReportsScaffoldFailureAndKeepsRegistration(t *testing.T) {
+	isolateState(t)
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, ".agents"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".agents", "knowledge"), []byte("operator file"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	stdout, stderr, code := execute(t, "project", "init", "api", "--dir", root, "--format", "json")
+	if code != 1 || stdout != "" {
+		t.Fatalf("code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	var output errorOutput
+	if err := json.Unmarshal([]byte(stderr), &output); err != nil {
+		t.Fatal(err)
+	}
+	if output.Error.Code != "project_scaffold_failed" {
+		t.Errorf("error code = %q, want project_scaffold_failed", output.Error.Code)
+	}
+	kept, err := os.ReadFile(filepath.Join(root, ".agents", "knowledge"))
+	if err != nil || string(kept) != "operator file" {
+		t.Errorf("scaffold displaced operator content: %q %v", kept, err)
+	}
+	stdout, stderr, code = execute(t, "project", "list", "--format", "json")
+	if code != 0 || stderr != "" {
+		t.Fatalf("list: code=%d stdout=%q stderr=%q", code, stdout, stderr)
+	}
+	if !strings.Contains(stdout, "\"api\"") {
+		t.Errorf("registration was not kept after a scaffold failure: %s", stdout)
 	}
 }
 

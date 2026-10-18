@@ -301,19 +301,36 @@ Idempotent registration of `id -> canonical root` of `--dir` or the working dire
 
 After registration, `init` scaffolds the knowledge-base skeleton in the target
 repository, creating only what is missing: the seven category directories,
-`.agents/knowledge/schema.md`, eight card templates under
-`.agents/knowledge/templates/`, and a starter `.agents/skills/agent-knowledge/SKILL.md`
-with the project ID rendered into every command. Existing files are never
-overwritten or written through symlinks, so re-running `init` on a complete
-KB adds nothing. Text output lists what was created:
+`.agents/knowledge/README.md`, `.agents/knowledge/schema.md`, eight card
+templates under `.agents/knowledge/templates/`, and a starter
+`.agents/skills/agent-knowledge/SKILL.md` with the project ID rendered into
+every command. Existing files are never overwritten or written through
+symlinks, so re-running `init` on a complete KB adds nothing, and re-running it
+after a tool upgrade adds only the skeleton files the repository still lacks.
+Text output lists what was created, and when the freshly scaffolded starter
+skill still carries the profile placeholders it ends with the one manual step:
 
 ```text
-Scaffolded 10 knowledge-base files:
+Scaffolded 11 knowledge-base files:
+  .agents/knowledge/README.md
   .agents/knowledge/schema.md
   .agents/knowledge/templates/anti-pattern.md
   ...
   .agents/skills/agent-knowledge/SKILL.md
+Next: fill the Repository Profile section of .agents/skills/agent-knowledge/SKILL.md with this repository's real values (prompt: .agents/knowledge/README.md), then run wfm-rag index --project api
 ```
+
+The scaffolded knowledge README is documentation, not a card: files directly
+under `.agents/knowledge/` and any file named `README.md` are never indexed. Its
+"First Task For The Agent" block is a copy-paste prompt for the repository's
+agent to fill the starter skill's `Repository Profile` with real triggers and
+verification commands. The `Next:` line appears only alongside a scaffolded-file
+list and only while the starter skill still carries the profile placeholders: a
+no-op refresh or a rebind into an already complete target prints nothing extra,
+and a filled profile gets no hint. The prompt path is named only when the
+knowledge README actually carries the scaffolded prompt, so a repository with a
+customized README gets the hint without a path. JSON output carries no hint
+field; the created paths are in `scaffolded`.
 
 JSON shape (the `scaffolded` array lists created repository-relative paths and is
 omitted when nothing was created):
