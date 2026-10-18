@@ -89,8 +89,8 @@ Pick the type by what the knowledge IS, then copy the matching template from
 | `pattern` | A recommended workflow or implementation shape | `patterns/` | `pattern.md` |
 | `anti-pattern` | A recurring mistake to avoid, and why | `anti-patterns/` | `anti-pattern.md` |
 | `dependency` | An external tool or package and its non-obvious behavior | `dependencies/` | `dependency.md` |
-| `incident` | Current state of one ongoing incident plus its concise history | `incidents/` | `incident.md` |
-| `research` | Current state of one ongoing research target plus its concise history | `research/` | `research.md` |
+| `incident` | One tracked incident, open or closed: current state, cause and remediation, plus its concise history | `incidents/` | `incident.md` |
+| `research` | One tracked research target, open or concluded: current state and findings, plus its concise history | `research/` | `research.md` |
 | `state` | Current project state — live inventories, pending work, open questions | `state/` | `state.md` |
 
 ## What Goes Where
@@ -149,17 +149,21 @@ now and why. Data that a database or service already owns is not a KB card:
 store the query path, never a copy.
 
 **Ownership of tracked work:** one `state/tracked-work.md` card owns the *list*
-of current incidents and research targets (card, one-line status, working
+of currently open incidents and research targets (card, one-line status, working
 directory). It must not describe individual entries — point at the entry's card.
-Each incident or research card owns its own entry and its working directory.
+A closed entry keeps its card and leaves the list. Each incident or research
+card owns its own entry and its working directory.
 
-**Ongoing incidents and research** — `incidents/`, `research/`: one card per
-tracked entry, always linked to its working directory. Store the current state
-(status, control in place and working or not, what is monitored, where the
-tooling lives) plus a concise history: timeline, findings, hypotheses, quirks,
-theories — everything useful for the ongoing work. Describe data blobs (what,
-why, how long they stay relevant). NEVER store data blobs or scripts in the KB
-— everything large goes into the working directory.
+**Tracked incidents and research** — `incidents/`, `research/`: one card per
+tracked entry, open or closed, always linked to its working directory. Store
+the current state (status, control in place and working or not, what is
+monitored, where the tooling lives) plus a concise history: timeline, cause,
+findings, hypotheses, quirks, theories — everything useful while the entry is
+open, and everything a later reader needs once it is closed. Describe data
+blobs (what, why, how long they stay relevant). NEVER store data blobs or
+scripts in the KB — everything large goes into the working directory. A
+reusable lesson that outlives the entry graduates to a `patterns/` or
+`anti-patterns/` card; the entry card keeps the entry's own history.
 
 ## Update Rules
 

@@ -40,14 +40,14 @@ The `.agents` and `.agents/knowledge` directories themselves must not be symlink
 
 | Type | Directory | Typical purpose |
 | --- | --- | --- |
-| `pattern` | `patterns/` | Preferred recurring implementation or workflow |
-| `anti-pattern` | `anti-patterns/` | Known harmful approach and safer alternative |
-| `dependency` | `dependencies/` | Package-specific API or behavior |
-| `incident` | `incidents/` | Failure, cause, remediation, and prevention |
-| `research` | `research/` | Open research target: current state, findings, data location |
-| `reference` | `sources/` | Durable repository or external reference |
-| `decision` | `sources/` | Architectural decision and rationale |
-| `state` | `state/` | Current project state: what works, what is pending, live inventories |
+| `pattern` | `patterns/` | A recommended workflow or implementation shape |
+| `anti-pattern` | `anti-patterns/` | A recurring mistake to avoid, and why |
+| `dependency` | `dependencies/` | An external tool or package and its non-obvious behavior |
+| `incident` | `incidents/` | One tracked incident, open or closed: current state, cause and remediation, plus its concise history |
+| `research` | `research/` | One tracked research target, open or concluded: current state and findings, plus its concise history |
+| `reference` | `sources/` | Time-independent facts and external contracts |
+| `decision` | `sources/` | An architectural decision and its rationale |
+| `state` | `state/` | Current project state: live inventories, pending work, open questions |
 
 The implementation validates directory category and card type separately; this mapping is an authoring convention.
 
@@ -55,7 +55,9 @@ The implementation validates directory category and card type separately; this m
 
 Time-independent types stay time-independent. `patterns/`, `anti-patterns/`, `sources/`, and `dependencies/` hold facts that remain true whenever they are read: no dated measurements, no current project state, no work-state narratives, no incident retelling, and no correction banner over superseded text — rewrite the body instead.
 
-`state/`, `incidents/`, and `research/` hold dated snapshots: current state plus concise history, each card dated, and each incident or research card linked to its own working directory. Scripts and large artifacts belong in that working directory, never inside a card. Data that a database or service already owns is not a card; the card stores the query path.
+`state/` holds dated snapshots of what is true now: what works, what is pending, open questions, and verification notes, with no history accumulated for its own sake. Do not pin volatile counts in a card that is not the snapshot of record; describe the shape, point at the source of truth, and let the snapshot of record carry its date and a re-check command. Data that a database or service already owns is not a card: the card stores the query path.
+
+`incidents/` and `research/` hold one card per tracked entry, open or closed: current state, cause or findings, remediation, and a concise history, each card dated and linked to its own working directory. Scripts and large artifacts belong in that working directory, never inside a card. `state/tracked-work.md` lists only the currently open entries; a closed entry keeps its card and leaves the list. A reusable lesson that outlives its entry graduates to a `patterns/` or `anti-patterns/` card, so the entry card keeps only that entry's own history.
 
 The target repository's `agent-knowledge` skill owns the detailed placement rules and the hygiene sweep.
 

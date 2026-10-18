@@ -227,8 +227,8 @@ The category controls discovery. The frontmatter `type` controls card semantics 
 | `pattern` | `patterns/` | A recommended workflow or implementation shape |
 | `anti-pattern` | `anti-patterns/` | A recurring mistake to avoid, and why |
 | `dependency` | `dependencies/` | An external tool or package and its non-obvious behavior |
-| `incident` | `incidents/` | Current state of one ongoing incident plus its concise history |
-| `research` | `research/` | Current state of one ongoing research target plus its concise history |
+| `incident` | `incidents/` | One tracked incident, open or closed: current state, cause and remediation, plus its concise history |
+| `research` | `research/` | One tracked research target, open or concluded: current state and findings, plus its concise history |
 | `state` | `state/` | Current project state: live inventories, pending work, open questions |
 | `reference`, `decision` | `sources/` | Time-independent facts, external contracts, and architectural decisions |
 

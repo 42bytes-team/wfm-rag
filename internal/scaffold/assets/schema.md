@@ -30,8 +30,8 @@ extensions other than exact lowercase `.md` are not indexed.
 | `pattern` | `patterns/` | A recommended workflow or implementation shape |
 | `anti-pattern` | `anti-patterns/` | A recurring mistake to avoid, and why |
 | `dependency` | `dependencies/` | An external tool or package and its non-obvious behavior |
-| `incident` | `incidents/` | Current state of one ongoing incident plus its concise history |
-| `research` | `research/` | Current state of one ongoing research target plus its concise history |
+| `incident` | `incidents/` | One tracked incident, open or closed: current state, cause and remediation, plus its concise history |
+| `research` | `research/` | One tracked research target, open or concluded: current state and findings, plus its concise history |
 | `state` | `state/` | Current project state: live inventories, pending work, open questions |
 
 Directory and type are validated separately; this mapping is the authoring
@@ -110,9 +110,13 @@ focused retrieval concern per section.
 `patterns/`, `anti-patterns/`, `sources/`, and `dependencies/` hold facts that
 stay true regardless of when they are read: no dated measurements, no
 work-state narratives, no incident retelling, no correction banners over
-superseded text. `state/`, `incidents/`, and `research/` hold dated snapshots:
-current state plus concise history, each card tied to its date and to its
-source of truth or working directory.
+superseded text.
+
+`state/` holds dated snapshots of what is true now, with no history kept for
+its own sake. `incidents/` and `research/` hold one card per tracked entry,
+open or closed: current state, cause or findings, plus a concise history, each
+card tied to its date and to its working directory. A lesson that outlives its
+entry becomes a `pattern` or `anti-pattern` card.
 
 The full placement rules and the hygiene sweep live in the `agent-knowledge`
 skill, "What Goes Where". A card that violates them is reclassified or trimmed,

@@ -83,8 +83,8 @@ Pick the type by what the knowledge IS, then place it in the matching directory:
 | `pattern` | `patterns/` | A recommended workflow or implementation shape |
 | `anti-pattern` | `anti-patterns/` | A recurring mistake to avoid, and why |
 | `dependency` | `dependencies/` | An external tool or package and its non-obvious behavior |
-| `incident` | `incidents/` | Current state of one ongoing incident plus its concise history |
-| `research` | `research/` | Current state of one ongoing research target plus its concise history |
+| `incident` | `incidents/` | One tracked incident, open or closed: current state, cause and remediation, plus its concise history |
+| `research` | `research/` | One tracked research target, open or concluded: current state and findings, plus its concise history |
 | `state` | `state/` | Current project state: live inventories, pending work, open questions |
 
 ## What Goes Where
@@ -101,7 +101,7 @@ grep -rnE '20[0-9]{2}-[0-9]{2}-[0-9]{2}|[Cc]onfirmed case|as of|planned|deferred
 
 State cards (`state/`) are dated snapshots, not live mirrors: current state, what is pending, and open questions, with no history for its own sake. Do not pin volatile counts in a card that is not the snapshot of record — describe the shape and point at the source of truth, and let the snapshot of record carry its date and a re-check command. Data that a database or service owns is not a card: store the query path, never a copy.
 
-Incident and research cards own their entry and its working directory: current state plus concise history, plus a description of any data blobs. Scripts and large artifacts live in the working directory, never in the KB. One `state/tracked-work.md` card owns the list of tracked entries and points at each entry's card instead of describing it.
+Incident and research cards own one tracked entry, open or closed, and its working directory: current state plus concise history, plus a description of any data blobs. A reusable lesson that outlives the entry graduates to a `patterns/` or `anti-patterns/` card; the entry card keeps the entry's own history. Scripts and large artifacts live in the working directory, never in the KB. One `state/tracked-work.md` card owns the list of currently open entries and points at each entry's card instead of describing it.
 
 Re-check placement on every update: time-independent directories must not accumulate state, and `state/` must not accumulate history.
 
