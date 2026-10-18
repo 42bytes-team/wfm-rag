@@ -27,7 +27,7 @@ Cover state-directory resolution, registry round-trip with `0600`/`0700` modes, 
 
 ### `internal/scaffold/scaffold_test.go`
 
-Cover the full skeleton for a fresh repository with the project ID rendered into the starter skill and the knowledge README, the scaffolded knowledge README carrying the profile-filling prompt, idempotence with no overwrite of existing files or symlinks, filling only the missing pieces of a partial skeleton, the returned repository-relative paths, rejection of unsafe skeleton paths (a symlinked intermediate directory or a wrong-kind file destination is reported, never displaced or written through), profile-state detection (placeholders present, profile filled, customized README without the scaffolded prompt), and the required project ID.
+Cover the full skeleton for a fresh repository with the project ID rendered into the starter skill and the knowledge README, the scaffolded knowledge README carrying the profile-filling prompt and the `AGENTS.md` wiring wording, idempotence with no overwrite of existing files or symlinks, filling only the missing pieces of a partial skeleton, the returned repository-relative paths, rejection of unsafe skeleton paths (a symlinked intermediate directory or a wrong-kind file destination is reported, never displaced or written through), profile-state detection (placeholders present, profile filled, customized README without the scaffolded prompt), and the required project ID.
 
 ### `internal/mcpserver/server_test.go`
 

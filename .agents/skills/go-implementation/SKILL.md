@@ -51,7 +51,7 @@ Own the registry file, the `flock(LOCK_EX|LOCK_NB)` writer lock, ID syntax, stor
 
 Public surface: `Ensure`, `ReadProfileStatus`, `ProfileStatus`, `KBReadmeFile`, `SkillFile`.
 
-Own the embedded KB skeleton that `project init` creates — the seven category directories, `.agents/knowledge/README.md` carrying the profile-filling prompt, `.agents/knowledge/schema.md`, the eight card templates under `.agents/knowledge/templates/`, and the starter `agent-knowledge` skill with the project ID rendered in — and its create-only filesystem behavior: existing files, directories, and symlinks are never overwritten, displaced, or written through, and a wrong-kind skeleton path is an error rather than a replacement. No other package writes into a target repository.
+Own the embedded KB skeleton that `project init` creates — the seven category directories, `.agents/knowledge/README.md` carrying the profile-filling prompt and the paste-ready `AGENTS.md` wiring wording (gate, routing row, skills-versus-cards boundary), `.agents/knowledge/schema.md`, the eight card templates under `.agents/knowledge/templates/`, and the starter `agent-knowledge` skill with the project ID rendered in — and its create-only filesystem behavior: existing files, directories, and symlinks are never overwritten, displaced, or written through, and a wrong-kind skeleton path is an error rather than a replacement. `AGENTS.md` is never created or written; a target repository always owns its own instruction file. No other package writes into a target repository.
 
 ### `internal/mcpserver`
 

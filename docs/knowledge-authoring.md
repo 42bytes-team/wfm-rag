@@ -12,6 +12,8 @@ After every source change, run a complete `wfm-rag index` build.
 
 A new KB bootstraps itself: `wfm-rag project init <id>` registers the project and creates the missing skeleton — the category directories, `.agents/knowledge/README.md`, `.agents/knowledge/schema.md`, the eight card templates under `.agents/knowledge/templates/`, and a starter `.agents/skills/agent-knowledge/SKILL.md` with the project ID rendered in. Scaffolding is create-only: existing files are never overwritten, so a repository may keep its customized copies. Route matching tasks to the skill from `AGENTS.md`; keep repository-specific changes in the skill's final profile section so future synchronization stays easy, and fill that profile with the prompt in the scaffolded knowledge `README.md` before the first retrieval task.
 
+The skill must also be routed from `AGENTS.md`, which scaffolding never writes: a gate that loads the skill and completes its preflight before any repository read, command, plan, delegation, or conclusion; a routing row for retrieval and card-lifecycle work; and a `Skills vs Knowledge Base` boundary — procedures belong in skills, on-demand facts and established patterns belong in cards, and a lesson that changes how the agent works is promoted into a skill instead of living only in a card. Phrase the gate and the row as the questions this repository's work actually raises; the shape is the same for code and non-code projects. The scaffolded knowledge `README.md` carries the paste-ready wording.
+
 ## Discoverable Categories
 
 Only these exact first-level directories are scanned:

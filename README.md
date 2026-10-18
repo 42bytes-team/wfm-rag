@@ -74,6 +74,8 @@ wfm-rag search --project api "config parser"
 
 The starter skill's `Repository Profile` is intentionally left as placeholders. Hand the prompt in the scaffolded `.agents/knowledge/README.md` to the agent that will work in that repository, once, before its first task: it fills the profile with the real retrieval triggers and verification commands that retrieval quality depends on. `project init` prints this next step whenever it scaffolds files into a starter skill that still carries those placeholders; a no-op refresh prints nothing extra.
 
+Scaffolding does not touch the repository's `AGENTS.md`, and a skill nothing routes to is a skill no agent loads. Add the KB wiring there yourself: a gate that loads `.agents/skills/agent-knowledge/SKILL.md` and completes its preflight before any repository read, command, plan, delegation, or conclusion; a routing row for retrieval and card-lifecycle work; and a short `Skills vs Knowledge Base` boundary that keeps procedures in skills and facts in cards. The scaffolded `.agents/knowledge/README.md` carries paste-ready wording for all three, generalized to any project — code or not — and its agent prompt tells the agent to add the wiring when it is missing.
+
 `project init` uses the working directory. Pass `--dir /home/alice/projects/api` to register another path. The command is idempotent: a new ID registers, the same directory refreshes, and a different directory rebinds the ID and reports the previous root.
 
 Continue with these commands:

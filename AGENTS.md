@@ -125,7 +125,7 @@ Never implement ranking, filters, excerpts, or exact retrieval separately in an 
 - Only active cards enter index documents/chunks; inactive cards are still parsed and validated.
 - `paths` are citations/ranking hints, never permission to read source files.
 - Limits: 1 MiB/card, 100 MiB corpus, 10,000 cards, 256-byte ID, 8,000-rune chunk, 512 MiB index.
-- `project init` is the only command that writes into a target repository, and only as a create-only skeleton: category directories, `.agents/knowledge/README.md`, `.agents/knowledge/schema.md`, `.agents/knowledge/templates/*.md`, and `.agents/skills/agent-knowledge/SKILL.md`. Every scaffold operation is anchored to an opened root descriptor of the target repository, so no write can leave it. The scaffolded knowledge `README.md` is documentation, never a card candidate, and carries the prompt that fills the starter skill's `Repository Profile`. Existing files, directories, and symlinks are never overwritten, displaced, or written through; a wrong-kind skeleton path is a `project_scaffold_failed` error and the registration itself still stands. No identity or retrieval state is ever stored in a target repository.
+- `project init` is the only command that writes into a target repository, and only as a create-only skeleton: category directories, `.agents/knowledge/README.md`, `.agents/knowledge/schema.md`, `.agents/knowledge/templates/*.md`, and `.agents/skills/agent-knowledge/SKILL.md`. Every scaffold operation is anchored to an opened root descriptor of the target repository, so no write can leave it. The scaffolded knowledge `README.md` is documentation, never a card candidate; it carries the prompt that fills the starter skill's `Repository Profile` and the wording that wires the skill into the target repository's `AGENTS.md`. That instruction file belongs to the target repository: the tool never creates or edits it. Existing files, directories, and symlinks are never overwritten, displaced, or written through; a wrong-kind skeleton path is a `project_scaffold_failed` error and the registration itself still stands. No identity or retrieval state is ever stored in a target repository.
 
 ## Index Invariants
 
@@ -167,7 +167,7 @@ Never implement ranking, filters, excerpts, or exact retrieval separately in an 
 - CLI flags/output/errors: change `cmd/wfm-rag`, preserve streams/codes, update README/CLI docs.
 - MCP tools/reload/protocol: change `internal/mcpserver`, verify pinned SDK signatures, run unit and subprocess tests.
 - Project registry/statuses/healthcheck: change `internal/project`, preserve the flock lock and atomic-write contract, and update CLI docs.
-- KB skeleton/README prompt/templates/starter skill: change `internal/scaffold` assets, keep create-only semantics, and update `docs/knowledge-authoring.md`.
+- KB skeleton/README prompt and wiring wording/templates/starter skill: change `internal/scaffold` assets, keep create-only semantics, and update `docs/knowledge-authoring.md`.
 - Public behavior/limits/client compatibility: update the corresponding human docs and this file/skills when agent workflow changes.
 
 ## Documentation Sync
@@ -179,6 +179,7 @@ Never implement ranking, filters, excerpts, or exact retrieval separately in an 
 | commands, flags, defaults, output fields, exit codes, error codes | `README.md` (CLI Reference) and `docs/cli.md` |
 | install steps, Go version, dependencies, state directory, file modes | `README.md` (Install, State Directory) and `docs/index-format.md` |
 | onboarding flow, `project init` behavior, scaffolding, registry or healthcheck semantics | `README.md` (Onboarding) and `docs/cli.md` |
+| `AGENTS.md` wiring for a target repository (gate, routing row, skills-versus-cards boundary) | `README.md` (Onboarding), `docs/cli.md`, `docs/knowledge-authoring.md`, and `internal/scaffold/assets/kb-readme.md` |
 | MCP client setup, tool names, input schemas, launch allowlist, degraded startup | `README.md` (Connect An LLM Through MCP) and `docs/mcp-clients.md` |
 | card categories, types, statuses, frontmatter fields, lifecycle steps, limits | `README.md` (Knowledgebase) and `docs/knowledge-authoring.md` |
 | package ownership, data flow, internal invariants | `docs/architecture.md`; README keeps only the summary diagram |

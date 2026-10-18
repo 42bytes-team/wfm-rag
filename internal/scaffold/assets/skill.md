@@ -204,6 +204,15 @@ reusable lesson that outlives the entry graduates to a `patterns/` or
   as historical with its version/date and a pointer to the active card. Never
   leave two current-looking versions of the same fact.
 
+## Agent Routing
+
+This skill only works when the repository's `AGENTS.md` loads it. That file
+should carry a gate that runs this skill's preflight before any repository read,
+command, plan, delegation, or conclusion, a routing row for retrieval and
+card-lifecycle work, and a short skills-versus-cards boundary. The knowledge
+`README.md` carries the paste-ready wording. Scaffolding never creates or edits
+`AGENTS.md`.
+
 ## Repository Profile
 
 Fill this section in whenever the skill is copied into a repository. `project

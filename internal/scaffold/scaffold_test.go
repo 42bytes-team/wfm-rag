@@ -59,6 +59,9 @@ func TestEnsureCreatesFullSkeletonWithProjectID(t *testing.T) {
 	if strings.Contains(string(skill), "{{PROJECT}}") || !strings.Contains(string(skill), "--project api") {
 		t.Error("starter skill must render the project ID into every command")
 	}
+	if !strings.Contains(string(skill), "AGENTS.md") {
+		t.Error("starter skill must tell the repository to route work to it from AGENTS.md")
+	}
 	readme, err := os.ReadFile(filepath.Join(root, KBReadmeFile))
 	if err != nil {
 		t.Fatalf("knowledge README missing: %v", err)
@@ -67,9 +70,13 @@ func TestEnsureCreatesFullSkeletonWithProjectID(t *testing.T) {
 		t.Error("knowledge README must name the project ID")
 	}
 	prompt := string(readme)
-	for _, want := range []string{"First Task For The Agent", "Repository Profile", "<project-specific terms>", "<project-specific commands>"} {
+	for _, want := range []string{
+		"Wire It Into AGENTS.md", "Universal gate", "Skills vs Knowledge Base",
+		"First Task For The Agent", "Repository Profile",
+		"<project-specific terms>", "<project-specific commands>",
+	} {
 		if !strings.Contains(prompt, want) {
-			t.Errorf("knowledge README prompt is missing %q", want)
+			t.Errorf("knowledge README is missing %q", want)
 		}
 	}
 }

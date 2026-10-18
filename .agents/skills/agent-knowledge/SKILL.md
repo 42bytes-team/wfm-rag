@@ -268,7 +268,7 @@ Do not use inventory output as the normal context-retrieval path.
 
 After copying this skill into another repository:
 
-1. Route retrieval and card-lifecycle tasks to `agent-knowledge` in `AGENTS.md`.
+1. Route the skill from `AGENTS.md`: a gate that loads this skill and completes its preflight before any repository read, command, plan, delegation, or conclusion; a routing row for retrieval and card-lifecycle work; and a short boundary that keeps procedures in skills and facts in cards. Write the gate and the row as the questions this repository's work actually raises, and add a `Skills vs Knowledge Base` section so a lesson that changes how the agent works is promoted into a skill instead of living only in a card. `wfm-rag` never creates or edits `AGENTS.md`; the scaffolded knowledge `README.md` carries the paste-ready wording.
 2. Ensure `.agents/knowledge/` uses the seven supported categories.
 3. Install/configure the `wfm-rag` binary; register the repository once with `wfm-rag project init <id>` and launch one MCP process with an explicit `--project` allowlist.
 4. Append a short `Repository Profile` below including the project ID; do not fork the generic lifecycle unless the tool contract differs.

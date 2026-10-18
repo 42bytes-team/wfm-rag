@@ -307,6 +307,11 @@ templates under `.agents/knowledge/templates/`, and a starter
 every command. Existing files are never overwritten or written through
 symlinks, so re-running `init` on a complete KB adds nothing, and re-running it
 after a tool upgrade adds only the skeleton files the repository still lacks.
+Scaffolding never creates or edits the target repository's `AGENTS.md`; routing
+the skill from that file is a separate operator step, and the scaffolded
+knowledge README carries the paste-ready gate line, routing row, and
+skills-versus-cards boundary.
+
 Text output lists what was created, and when the freshly scaffolded starter
 skill still carries the profile placeholders it ends with the one manual step:
 
