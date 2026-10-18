@@ -5,21 +5,21 @@ description: Use for planning, design, scoping, research, comparison, or propose
 
 # Implementation Planning
 
-Planning may inspect source/tests/docs and update `docs/planning/`, but must not edit production code or tests until execution is approved.
+Planning inspects source/tests/docs and writes an active plan under `docs/planning/` when the work needs one, and must not edit production code or tests until execution is approved.
 
 ## Start With Ownership
 
-Use `AGENTS.md` and `docs/architecture.md` to identify the owner. Do not read the entire historical implementation plan by default.
+Use `AGENTS.md` and `docs/architecture.md` to identify the owner.
 
-Plan-section routing:
+Contract routing:
 
-- corpus and chunking: implementation plan sections around card schema/discovery;
-- index format/persistence: index design section plus `docs/index-format.md`;
-- ranking/filtering: search section plus dogfood report;
-- CLI/MCP: command/tool sections plus `docs/cli.md` and `docs/mcp-clients.md`;
-- testing/errors: testing and error-contract sections.
+- corpus and chunking: `docs/knowledge-authoring.md` plus `internal/cards` tests;
+- index format/persistence: `docs/index-format.md` plus `internal/index` tests;
+- ranking/filtering: `docs/architecture.md` search invariants plus `internal/search` tests;
+- CLI/MCP: `docs/cli.md` and `docs/mcp-clients.md` plus the command integration tests;
+- testing/errors: `CONTRIBUTING.md` plus the owning package's tests.
 
-Current source/tests override stale examples in a historical plan.
+An active plan is a proposal; current source and tests are the contract.
 
 ## Workflow
 
@@ -54,4 +54,4 @@ Reject speculative databases, HTTP transport, embeddings, watchers, background w
 
 ## Documentation
 
-Planning docs record decisions. Public operation belongs in README and focused docs; agent workflow belongs in AGENTS/skills. Include documentation updates in every behavior-changing plan, and name the affected `README.md` section (Install, Onboarding, Connect An LLM Through MCP, CLI Reference, Knowledgebase) plus the focused `docs/` owner in the impact checklist. AGENTS.md "Documentation Sync" maps each change type to both.
+A plan records decisions while its work is open. Public operation belongs in `README.md` and the focused `docs/` owner; agent workflow belongs in `AGENTS.md`/skills. When the change ships, land those claims in their owners and delete the plan file. Include documentation updates in every behavior-changing plan, and name the affected `README.md` section (Install, Onboarding, Connect An LLM Through MCP, CLI Reference, Knowledgebase) plus the focused `docs/` owner in the impact checklist. AGENTS.md "Documentation Sync" maps each change type to both.

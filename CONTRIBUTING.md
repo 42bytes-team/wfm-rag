@@ -13,7 +13,7 @@ Do not add HTTP transport, databases, embeddings, watchers, background workers, 
 - `docs/knowledge-authoring.md`: source corpus contract.
 - `docs/index-format.md`: persisted format.
 - `docs/mcp-clients.md`: client compatibility.
-- `docs/planning/agent-rag-mcp-implementation.md`: implemented v0.1 design record.
+- `docs/troubleshooting.md`: symptom-based repair.
 
 ## Repository Map
 
@@ -114,7 +114,7 @@ When implementation behavior changes, update all affected contracts:
 - MCP configuration/compatibility: `docs/mcp-clients.md`;
 - operational diagnosis: `docs/troubleshooting.md`.
 
-Do not treat planning documents as the only user documentation.
+A plan in `docs/planning/` is working material for open work. Its durable decisions land in the files above as the change ships, and the plan file is then deleted.
 
 ## Manual Smoke Test
 

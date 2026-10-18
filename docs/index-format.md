@@ -14,7 +14,7 @@ The default index path is:
 
 `root-sha256` is the full lowercase SHA-256 digest of the canonical absolute repository root.
 
-The root is made absolute, has root symlinks resolved, and is cleaned before hashing. Different symlink aliases for one target share the same default index. Moving the checkout changes the canonical root and therefore the path; `project init` in the new directory rebinds the project ID and the index must be rebuilt.
+The root is made absolute, has root symlinks resolved, and is cleaned before hashing. Different symlink aliases for one target share the same default index. Moving the checkout changes the canonical root and therefore the path; `project init` in the new directory rebinds the project ID and the index must be rebuilt. Keying the directory by corpus path rather than by project ID is deliberate: once the corpus moves, its old snapshot becomes unreachable, so a moved or rebound project can never silently serve a stale one.
 
 Indexing and retrieval should run as the same OS user, because the state directory is user-owned `0700` data.
 

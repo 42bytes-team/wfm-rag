@@ -292,7 +292,7 @@ Prefer one entry with an explicit `--project` allowlist over one entry per repos
 }
 ```
 
-Every server publishes its own copy of both tool definitions into every model request of an agent session, so four single-project entries cost four tool pairs before the agent reads a single card. One entry keeps one tool pair for every allowlisted project. Measured cost of one `wfm-rag` server in an OMP session is about 207 tokens per request; see [`docs/planning/agent-context-cost-multi-root-mcp.md`](planning/agent-context-cost-multi-root-mcp.md).
+Every server publishes its own copy of both tool definitions into every model request of an agent session, so four single-project entries cost four tool pairs before the agent reads a single card. One entry keeps one tool pair for every allowlisted project. Measured cost of one `wfm-rag` server in an OMP session is about 207 tokens per request.
 
 Each project must be registered and indexed separately. Retrieval is strictly per project:
 

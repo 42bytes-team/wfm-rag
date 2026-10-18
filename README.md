@@ -316,7 +316,7 @@ Editing Markdown never changes CLI or MCP results until an `index` run succeeds.
 | [`docs/index-format.md`](docs/index-format.md) | Persisted JSON contract and atomic replacement |
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | Symptom-based diagnosis and repair commands |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Development workflow and verification |
-| [`docs/planning/`](docs/planning/) | Design records for v0.1, the superseded multi-root experiment, and project-scoped retrieval |
+| [`docs/planning/`](docs/planning/) | Active plans for open work; a plan is deleted once its change ships |
 
 ## Contributing
 
@@ -328,4 +328,4 @@ go test -race -count=1 ./...
 go vet ./...
 ```
 
-`docs/architecture.md` maps the packages, and [`AGENTS.md`](AGENTS.md) plus `.agents/skills/` define the working rules for humans and coding agents. The CLI, index and search core, project registry with healthcheck, read-only stdio MCP server, and integration tests are implemented. This is internal local research software, and it is not intended for public distribution.
+`docs/architecture.md` maps the packages, and [`AGENTS.md`](AGENTS.md) plus `.agents/skills/` define the working rules for humans and coding agents. The CLI, index and search core, project registry with healthcheck, read-only stdio MCP server, and integration tests are implemented.

@@ -35,7 +35,7 @@ Agent clients commonly load instructions and skills only at startup. Restart the
 - `README.md` is the human operational contract.
 - `docs/architecture.md` is the package/data-flow/invariant map.
 - `docs/cli.md`, `docs/knowledge-authoring.md`, `docs/index-format.md`, `docs/mcp-clients.md`, and `docs/troubleshooting.md` own their specific public contracts.
-- `docs/planning/agent-rag-mcp-implementation.md` records v0.1 design intent and history; `docs/planning/agent-context-cost-multi-root-mcp.md` records the superseded multi-root merge experiment and its measurements; `docs/planning/project-scoped-knowledgebase.md` records the project-selection design. Read only the affected section; none is the sole current contract.
+- `docs/planning/` holds active plans only. A plan is written to be implemented and is deleted once its change ships, so the directory is often empty. A plan is never the current contract: current source, tests, and the documents above are.
 
 If source, tests, and documentation disagree, report and resolve the discrepancy rather than silently broadening behavior.
 

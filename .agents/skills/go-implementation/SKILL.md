@@ -80,7 +80,7 @@ Trace the whole affected path, but change behavior in its owner only.
 - Preserve deterministic discovery, map output, scoring, reason, and JSON ordering.
 - Keep stdout/stderr out of reusable packages. MCP stdout belongs exclusively to SDK transport.
 - Do not read files cited by card `paths`.
-- Do not add HTTP, databases, watchers, embeddings, background workers, or corpus inference. One process serves the projects configured at launch; every retrieval call names exactly one project resolved through the registry (`docs/planning/project-scoped-knowledgebase.md`). Tool inputs cannot select roots, index paths, or write operations.
+- Do not add HTTP, databases, watchers, embeddings, background workers, or corpus inference. One process serves the projects configured at launch; every retrieval call names exactly one project resolved through the registry. Tool inputs cannot select roots, index paths, or write operations.
 - Change public behavior and its documentation together. `README.md` plus the focused `docs/` owner update in the same change; AGENTS.md "Documentation Sync" names which section each change touches.
 
 ## Common Change Recipes
